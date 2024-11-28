@@ -5,7 +5,7 @@ pub struct Day01;
 
 impl Solution for Day01 {
     fn part_a(&self, input: &str) -> Answer {
-        let (_, data) = parsing::parse_matrix(parser, input).unwrap();
+        let (_, data) = parsing::parse_matrix(input, symbol_parser).unwrap();
         let sum = data
             .iter()
             .flatten()
@@ -26,7 +26,7 @@ enum CellType {
     Other,
 }
 
-fn parser(c: char) -> Result<CellType, String> {
+fn symbol_parser(c: char) -> Result<CellType, String> {
     match c {
         '|' => Ok(CellType::Vertical),
         '-' => Ok(CellType::Horizontal),

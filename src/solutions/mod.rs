@@ -1,5 +1,31 @@
-use crate::Solution;
+use crate::{NoSolution, Solution};
 
 pub mod day_01;
 
-pub const ALL: &[&dyn Solution] = &[&day_01::Day01];
+pub const ALL: [&dyn Solution; 25] = [
+    &day_01::Day01,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+    &NoSolution,
+];

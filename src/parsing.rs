@@ -1,31 +1,55 @@
-use nom::{character, combinator, multi, sequence, IResult};
+use nom::{
+    character::complete::{anychar, newline, not_line_ending, space0},
+    combinator::{all_consuming, map_parser, map_res, opt, verify},
+    multi::{many1, separated_list1},
+    sequence::{delimited, preceded},
+    IResult,
+};
 
-/// Parse a character into a type.
-pub fn parse_char<T>(f: fn(char) -> Result<T, String>, input: &str) -> IResult<&str, T> {
-    combinator::map_res(character::complete::anychar, f)(input)
+/// Parse a character and transform it with a function.
+pub fn parse_char<T>(input: &str, f: fn(char) -> Result<T, String>) -> IResult<&str, T> {
+    map_res(anychar, f)(input)
 }
 
-/// Parse a single-line string into a vector.
-pub fn parse_vector<T>(f: fn(char) -> Result<T, String>, input: &str) -> IResult<&str, Vec<T>> {
-    let line_parser = multi::many1(|x| parse_char(f, x));
-    let mut line_parser_spaces = sequence::preceded(character::complete::space0, line_parser);
-    line_parser_spaces(input)
+/// Parse non-empty string into a vector.
+pub fn parse_vector<T>(input: &str, f: fn(char) -> Result<T, String>) -> IResult<&str, Vec<T>> {
+    let line_as_str = verify(not_line_ending, |s: &str| !s.is_empty());
+    let vec_of_t = map_parser(line_as_str, all_consuming(many1(|x| parse_char(x, f))));
+    let mut parser = preceded(space0, vec_of_t); // ignore leading spaces
+    parser(input)
+}
+
+/// Parse multi-line string into a 2D matrix.
+pub fn parse_matrix_strict<T>(
+    input: &str,
+    f: fn(char) -> Result<T, String>,
+) -> IResult<&str, Vec<Vec<T>>> {
+    let mut parser = separated_list1(newline, |x| parse_vector(x, f));
+    parser(input)
 }
 
 /// Parse a multi-line string into a 2D matrix.
+/// Consumes and ignores leading and trailing newlines (if present).
 pub fn parse_matrix<T>(
-    f: fn(char) -> Result<T, String>,
     input: &str,
+    f: fn(char) -> Result<T, String>,
 ) -> IResult<&str, Vec<Vec<T>>> {
-    let mat_parser =
-        multi::separated_list1(character::complete::newline, |x| parse_vector::<T>(f, x));
-    let mat_parser_spaces = sequence::delimited(
-        combinator::opt(character::complete::newline),
-        mat_parser,
-        combinator::opt(character::complete::newline),
-    );
-    let mut mat_parser_spaces_eof = sequence::terminated(mat_parser_spaces, combinator::eof);
-    mat_parser_spaces_eof(input)
+    let mut parser = delimited(opt(newline), |x| parse_matrix_strict(x, f), opt(newline));
+    parser(input)
+}
+
+/// Identity character parser.
+pub fn identity(c: char) -> Result<char, String> {
+    Ok(c)
+}
+
+/// Character parser for boolean.
+pub fn char_to_bool(c: char) -> Result<bool, String> {
+    match c {
+        '1' => Ok(true),
+        '0' => Ok(false),
+        _ => Err(format!("Invalid bool {c}").to_string()),
+    }
 }
 
 #[cfg(test)]
@@ -33,21 +57,13 @@ mod tests {
     use super::*;
     use nom::error;
 
-    pub fn char_to_bool(c: char) -> Result<bool, String> {
-        match c {
-            '1' => Ok(true),
-            '0' => Ok(false),
-            _ => Err("Invalid bool".to_string()),
-        }
-    }
-
     #[test]
     fn test_parse_char() {
         // succeed on '1'
-        assert_eq!(parse_char(char_to_bool, "123"), Ok(("23", true)));
+        assert_eq!(parse_char("123", char_to_bool), Ok(("23", true)));
         // fail on '2'
         assert_eq!(
-            parse_char(char_to_bool, "23"),
+            parse_char("23", char_to_bool),
             Err(nom::Err::Error(error::Error::new(
                 "23",
                 error::ErrorKind::MapRes
@@ -55,7 +71,7 @@ mod tests {
         );
         // fail on newline
         assert_eq!(
-            parse_char(char_to_bool, "\n01"),
+            parse_char("\n01", char_to_bool),
             Err(nom::Err::Error(error::Error::new(
                 "\n01",
                 error::ErrorKind::MapRes
@@ -63,7 +79,7 @@ mod tests {
         );
         // fail on space
         assert_eq!(
-            parse_char(char_to_bool, " 01"),
+            parse_char(" 01", char_to_bool),
             Err(nom::Err::Error(error::Error::new(
                 " 01",
                 error::ErrorKind::MapRes
@@ -72,13 +88,31 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_vector() {
+    fn test_parse_vector_char() {
+        let vector_str = "01010abc";
+        let result = parse_vector(vector_str, identity);
+        assert_eq!(
+            result.unwrap().1,
+            vec!['0', '1', '0', '1', '0', 'a', 'b', 'c']
+        );
+    }
+
+    #[test]
+    fn test_parse_vector_bool() {
         let vector_str = "01010101";
-        let result = parse_vector(char_to_bool, vector_str);
+        let result = parse_vector(vector_str, char_to_bool);
         assert_eq!(
             result.unwrap().1,
             vec![false, true, false, true, false, true, false, true]
         );
+    }
+
+    #[test]
+    fn test_parse_vector_bool_bad() {
+        let vector_str = "01010201";
+        let result = parse_vector(vector_str, char_to_bool);
+        println!("{}", result.as_ref().unwrap_err());
+        assert!(result.is_err());
     }
 
     #[test]
@@ -87,7 +121,7 @@ mod tests {
 010101
 101010
 010101"#;
-        let result = parse_matrix(char_to_bool, matrix_str);
+        let result = parse_matrix(matrix_str, char_to_bool);
         assert!(result.is_ok());
         assert_eq!(
             result.unwrap().1,
@@ -108,7 +142,7 @@ mod tests {
         101010
         010101
 "#;
-        let result = parse_matrix(char_to_bool, matrix_str);
+        let result = parse_matrix(matrix_str, char_to_bool);
         assert!(result.is_ok());
         assert_eq!(
             result.unwrap().1,
@@ -140,7 +174,7 @@ mod tests {
         let matrix_str = r#"
         XOXOXO
         OXOXOX"#;
-        let result = parse_matrix(char_to_cellvalue, matrix_str);
+        let result = parse_matrix(matrix_str, char_to_cellvalue);
         assert!(result.is_ok());
         assert!(result.as_ref().unwrap().1[0]
             .iter()

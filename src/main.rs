@@ -21,15 +21,19 @@ struct RunArgs {
     pub input: Option<PathBuf>,
 }
 
+fn get_default_data_path(day: u32) -> PathBuf {
+    PathBuf::from(format!("data/{:02}.txt", day))
+}
+
 fn main_run(args: &RunArgs) -> Result<(), Box<dyn std::error::Error>> {
     let solution = aoc2024::solutions::ALL
         .get(args.day.saturating_sub(1) as usize)
         .unwrap_or_else(|| panic!("Invalid day {}", args.day));
 
-    let path = match &args.input {
-        Some(path) => PathBuf::from(path),
-        None => PathBuf::from(format!("data/{:02}.txt", args.day)),
-    };
+    let path: PathBuf = args
+        .input
+        .clone()
+        .unwrap_or_else(|| get_default_data_path(args.day));
     let file_content = fs::read_to_string(path).expect("Read input");
 
     let out = solution.part_a(file_content.as_str());
