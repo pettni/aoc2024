@@ -19,17 +19,21 @@ impl fmt::Display for Answer {
 }
 
 pub trait Solution {
-    fn part_a(&self, input: &str) -> Answer;
-    fn part_b(&self, input: &str) -> Answer;
-}
-
-pub struct NoSolution;
-
-impl Solution for NoSolution {
     fn part_a(&self, _: &str) -> Answer {
         Answer::Unimplemented
     }
     fn part_b(&self, _: &str) -> Answer {
         Answer::Unimplemented
+    }
+    fn is_dummy(&self) -> bool {
+        false
+    }
+}
+
+pub struct NoSolution;
+
+impl Solution for NoSolution {
+    fn is_dummy(&self) -> bool {
+        true
     }
 }
