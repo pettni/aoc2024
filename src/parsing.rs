@@ -1,6 +1,6 @@
 use nom::{
-    character::complete::{anychar, newline, not_line_ending, space0},
-    combinator::{all_consuming, map_parser, map_res, opt, verify},
+    character::complete::{anychar, digit1, newline, not_line_ending, space0, space1},
+    combinator::{all_consuming, complete, map_parser, map_res, opt, verify},
     multi::{many1, separated_list1},
     sequence::{delimited, preceded},
     IResult,
@@ -36,6 +36,20 @@ pub fn parse_matrix<T>(
 ) -> IResult<&str, Vec<Vec<T>>> {
     let mut parser = delimited(opt(newline), |x| parse_matrix_strict(x, f), opt(newline));
     parser(input)
+}
+
+/// Parse rows as numbers.
+pub fn parse_rows_of_ints(input: &str) -> IResult<&str, Vec<Vec<i64>>> {
+    let row_parser = map_parser(
+        preceded(space0, not_line_ending),
+        separated_list1(space1, map_res(digit1, str::parse::<i64>)),
+    );
+    let mut rows_parser = complete(delimited(
+        opt(newline),
+        separated_list1(newline, row_parser),
+        opt(newline),
+    ));
+    rows_parser(input)
 }
 
 /// Identity character parser.
