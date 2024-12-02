@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::fs;
 use std::path::PathBuf;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(name = "advent_of_code", version, about)]
@@ -27,14 +28,9 @@ fn get_default_data_path(day: u32) -> PathBuf {
 }
 
 fn main_run(args: &RunArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let solution = aoc2024::solutions::ALL
+    let (part_a, part_b) = aoc2024::solutions::ALL
         .get(args.day.saturating_sub(1) as usize)
         .unwrap_or_else(|| panic!("Invalid day {}", args.day));
-
-    if solution.is_dummy() {
-        println!("No solution implemented");
-        return Ok(());
-    }
 
     let path: PathBuf = args
         .input
@@ -48,17 +44,25 @@ fn main_run(args: &RunArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     let data = file_content.unwrap();
 
-    let out = solution.part_a(data.as_str());
-    println!("Part a: {out}");
-    let out = solution.part_b(data.as_str());
-    println!("Part b: {out}");
+    let t0 = Instant::now();
+    let out = part_a(data.as_str());
+    let t1 = t0.elapsed();
+    println!("Part a: {out:<20} [{t1:.0?}]");
+
+    let t0 = Instant::now();
+    let out = part_b(data.as_str());
+    let t1 = t0.elapsed();
+    println!("Part b: {out:<20} [{t1:.0?}]");
 
     Ok(())
 }
 
 fn main_run_all() -> Result<(), Box<dyn std::error::Error>> {
-    for day in 1..26 {
-        let args = RunArgs { day, input: None };
+    for day in 1..aoc2024::solutions::ALL.len() + 1 {
+        let args = RunArgs {
+            day: day as u32,
+            input: None,
+        };
         println!("Running day {day:02}");
         main_run(&args)?;
     }

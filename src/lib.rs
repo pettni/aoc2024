@@ -3,37 +3,20 @@ use std::fmt;
 pub mod parsing;
 pub mod solutions;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub enum Answer {
-    Number(i64),
+    #[default]
     Unimplemented,
+    Number(i64),
 }
 
 impl fmt::Display for Answer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Answer::Number(n) => write!(f, "{n}"),
-            Answer::Unimplemented => write!(f, "Unimplemented"),
+            Answer::Number(n) => n.fmt(f),
+            Answer::Unimplemented => "Unimplemented".fmt(f),
         }
     }
 }
 
-pub trait Solution {
-    fn part_a(&self, _: &str) -> Answer {
-        Answer::Unimplemented
-    }
-    fn part_b(&self, _: &str) -> Answer {
-        Answer::Unimplemented
-    }
-    fn is_dummy(&self) -> bool {
-        false
-    }
-}
-
-pub struct NoSolution;
-
-impl Solution for NoSolution {
-    fn is_dummy(&self) -> bool {
-        true
-    }
-}
+pub type Solutions = (fn(&str) -> Answer, fn(&str) -> Answer);
