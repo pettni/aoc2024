@@ -3,6 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Instant;
 
+#[cfg(feature = "dhat-heap")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
+
 #[derive(Parser)]
 #[command(name = "advent_of_code", version, about)]
 struct Args {
@@ -43,6 +47,9 @@ fn main_run(args: &RunArgs) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let data = file_content.unwrap();
+
+    #[cfg(feature = "dhat-heap")]
+    let _profiler = dhat::Profiler::new_heap();
 
     let t0 = Instant::now();
     let out = part_a(data.as_str());

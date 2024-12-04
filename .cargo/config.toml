@@ -1,0 +1,4 @@
+[alias]
+day = "run --quiet --release -- run"
+all = "run --quiet --release -- run-all"
+
