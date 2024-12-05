@@ -75,7 +75,8 @@ fn main_run(args: &RunArgs) -> Result<Duration, Box<dyn std::error::Error>> {
         .input
         .clone()
         .unwrap_or_else(|| get_default_data_path(args.day));
-    let data = fs::read_to_string(&path).unwrap_or_else(|_| panic!("Couldn't open file"));
+    let data =
+        fs::read_to_string(&path).unwrap_or_else(|_| panic!("Couldn't open file {:?}", path));
 
     let (out_a, dt_a, n_a) = part_run(part_a, data.as_str(), args.benchmark);
     let dt_a_ms = dt_a.as_secs_f64() * 1e3;
