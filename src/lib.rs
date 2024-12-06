@@ -1,5 +1,6 @@
 use std::fmt;
 
+pub mod map2d;
 pub mod parsing;
 pub mod solutions;
 
