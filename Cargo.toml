@@ -7,6 +7,7 @@ edition = "2021"
 bitvec = "1.0.1"
 clap = { version = "4.5.21", features = ["derive"] }
 dhat = { version = "0.3.3", optional = true }
+indoc = "2.0.5"
 itertools = "0.13.0"
 nom = "7"
 rayon = "1.10.0"

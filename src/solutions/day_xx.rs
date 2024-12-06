@@ -13,10 +13,12 @@ pub fn part_b(input: &str) -> Answer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
-    const TEST_INPUT: &str = r#"
-    1 2 3 4 5
-    "#;
+    const TEST_INPUT: &str = indoc! {"
+        1 2 3 4 5
+        1 2 3 4 5
+    "};
 
     #[test]
     fn test_part_a() {

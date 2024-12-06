@@ -63,17 +63,20 @@ pub fn part_b(input: &str) -> Answer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indoc::indoc;
 
-    const TEST_INPUT: &str = r#"MMMSXXMASM
-MSAMXMSMSA
-AMXSXMAAMM
-MSAMASMSMX
-XMASAMXAMM
-XXAMMXXAMA
-SMSMSASXSS
-SAXAMASAAA
-MAMMMXMMMM
-MXMXAXMASX"#;
+    const TEST_INPUT: &str = indoc! {"
+        MMMSXXMASM
+        MSAMXMSMSA
+        AMXSXMAAMM
+        MSAMASMSMX
+        XMASAMXAMM
+        XXAMMXXAMA
+        SMSMSASXSS
+        SAXAMASAAA
+        MAMMMXMMMM
+        MXMXAXMASX
+    "};
 
     #[test]
     fn test_part_a() {
