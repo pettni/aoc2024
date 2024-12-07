@@ -1,73 +1,87 @@
 use crate::Answer;
+use itertools::Itertools;
+use rayon::prelude::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 struct Problem {
     target: u64,
     numbers: Vec<u64>,
 }
 
-fn parse_problems(input: &str) -> Vec<Problem> {
-    let mut ret = Vec::new();
-    for line in input.lines() {
-        let splits = line.split(": ").collect::<Vec<&str>>();
-        assert_eq!(splits.len(), 2);
-        let target = str::parse::<u64>(splits[0]).unwrap();
-        let numbers = splits[1]
-            .split(" ")
-            .map(str::parse::<u64>)
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap();
-        ret.push(Problem { target, numbers });
-    }
-    ret
+fn parse_problem(line: &str) -> Problem {
+    let (target_str, numbers_str) = line.split(": ").collect_tuple::<(&str, &str)>().unwrap();
+    let target = str::parse::<u64>(target_str).unwrap();
+    let numbers = numbers_str
+        .split(" ")
+        .map(str::parse::<u64>)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    Problem { target, numbers }
 }
 
-fn int_len(x: u64) -> u32 {
+fn parse_problems(input: &str) -> Vec<Problem> {
+    input.lines().par_bridge().map(parse_problem).collect()
+}
+
+fn next_pow10(x: u64) -> u64 {
     let mut xc = x;
-    let mut res = 0;
+    let mut res = 1;
     while xc > 0 {
-        res += 1;
+        res *= 10;
         xc /= 10;
     }
     res
 }
 
-fn iter(problem: &Problem, idx: usize, accum: u64, include_or: bool) -> bool {
-    if idx == problem.numbers.len() {
-        return accum == problem.target;
-    }
-    let el = problem.numbers[idx];
-    let add_case = iter(problem, idx + 1, accum + el, include_or);
-    let mul_case = iter(problem, idx + 1, accum * el, include_or);
+fn is_solvable<const PARTB: bool>(problem: &Problem) -> bool {
+    let n = problem.numbers.len();
 
-    match include_or {
-        true => {
-            let el_len = int_len(el);
-            let or_case = iter(problem, idx + 1, accum * 10u64.pow(el_len) + el, include_or);
-            add_case || mul_case || or_case
+    // stack-allocated 'stack' of fixed capacity
+    // using an array + ptr
+    let mut stack: [(u64, usize); 64] = [(0, 0); 64];
+    let mut stackptr = 0; // next unused element
+
+    stack[stackptr] = (problem.numbers[0], 1);
+    stackptr += 1;
+
+    while stackptr > 0 {
+        let (total, idx) = stack[stackptr - 1];
+        stackptr -= 1;
+        if idx == n {
+            if total == problem.target {
+                return true;
+            }
+        } else if total <= problem.target {
+            let x = problem.numbers[idx];
+            stack[stackptr] = (total + x, idx + 1);
+            stackptr += 1;
+            if PARTB {
+                stack[stackptr] = (total * next_pow10(x) + x, idx + 1);
+                stackptr += 1;
+            }
+            stack[stackptr] = (total * x, idx + 1);
+            stackptr += 1;
         }
-        false => add_case || mul_case,
     }
+    false
 }
 
 pub fn part_a(input: &str) -> Answer {
-    let problems = parse_problems(input);
-    let num_solvable: u64 = problems
-        .into_iter()
-        .filter(|problem| iter(problem, 0, 0, false))
-        .map(|problem| -> u64 { problem.target })
+    let res = parse_problems(input)
+        .into_par_iter()
+        .filter(is_solvable::<false>)
+        .map(|p| p.target as i64)
         .sum();
-    Answer::Number(num_solvable as i64)
+    Answer::Number(res)
 }
 
 pub fn part_b(input: &str) -> Answer {
-    let problems = parse_problems(input);
-    let num_solvable: u64 = problems
-        .into_iter()
-        .filter(|problem| iter(problem, 0, 0, true))
-        .map(|problem| -> u64 { problem.target })
+    let res = parse_problems(input)
+        .into_par_iter()
+        .filter(is_solvable::<true>)
+        .map(|p| p.target as i64)
         .sum();
-    Answer::Number(num_solvable as i64)
+    Answer::Number(res)
 }
 
 #[cfg(test)]
