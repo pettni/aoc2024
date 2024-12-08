@@ -3,6 +3,7 @@ use std::fmt;
 pub mod map2d;
 pub mod parsing;
 pub mod solutions;
+pub mod math;
 
 #[derive(Debug, PartialEq, Default)]
 pub enum Answer {
