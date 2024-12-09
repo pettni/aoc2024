@@ -1,4 +1,5 @@
-use crate::map2d::{Dir, Map, Pos};
+use crate::map2d::Map;
+use crate::vec2::{Dir, Vec2i};
 use crate::Answer;
 use bitvec::prelude::*;
 use itertools::iproduct;
@@ -16,7 +17,7 @@ enum Tile {
     Obstacle,
 }
 
-type State = (Pos, Dir);
+type State = (Vec2i, Dir);
 
 fn parse_board(chars: &[&str]) -> (State, Map<Tile>) {
     let parse_tile = |c: char| -> Tile {
@@ -38,12 +39,12 @@ fn parse_board(chars: &[&str]) -> (State, Map<Tile>) {
         .find(|(r, c)| chars[*r].as_bytes()[*c] == b'^')
         .unwrap();
 
-    ((Pos { r, c }, Dir::N), map)
+    ((Vec2i::new(r as isize, c as isize), Dir::N), map)
 }
 
 // Make one step.
 // Return None if we step outside of map.
-fn step(state: &State, map: &Map<Tile>, extra_obs: Option<&Pos>) -> Option<State> {
+fn step(state: &State, map: &Map<Tile>, extra_obs: Option<&Vec2i>) -> Option<State> {
     let pos_new = map.step_within(&state.0, &state.1, 1)?;
     let new_tile = extra_obs
         .and_then(|x| {
@@ -68,7 +69,7 @@ pub fn part_a(input: &str) -> Answer {
     let mut visited = bitvec![0; 130 * 130];
 
     while let Some((pos, _)) = state {
-        visited.set(pos.c * 130 + pos.r, true);
+        visited.set((pos.x * 130 + pos.y) as usize, true);
         state = state.and_then(|s| step(&s, &map, None));
     }
 
@@ -78,7 +79,7 @@ pub fn part_a(input: &str) -> Answer {
 
 // Step until next obstacle and turn.
 // Return None if we step outside of map.
-fn quick_step(state: &State, map: &Map<Tile>, extra_obs: &Pos) -> Option<State> {
+fn quick_step(state: &State, map: &Map<Tile>, extra_obs: &Vec2i) -> Option<State> {
     let mut pos = state.0;
     while let Some(pos_new) = map.step_within(&pos, &state.1, 1) {
         if pos_new == *extra_obs || map[&pos_new] == Tile::Obstacle {
@@ -89,15 +90,15 @@ fn quick_step(state: &State, map: &Map<Tile>, extra_obs: &Pos) -> Option<State> 
     None
 }
 
-fn has_loop(state0: &State, map: &Map<Tile>, extra_obs: &Pos) -> bool {
+fn has_loop(state0: &State, map: &Map<Tile>, extra_obs: &Vec2i) -> bool {
     let mut state: Option<State> = Some(*state0);
     let mut visited = bitvec![0; 130 * 130 * 4];
     while let Some((pos, dir)) = state {
-        let state_idx = pos.r * 130 * 4 + pos.c * 4 + dir as usize;
-        if visited[state_idx] {
+        let state_idx = pos.x * 130 * 4 + pos.y * 4 + dir as isize;
+        if visited[state_idx as usize] {
             return true;
         }
-        visited.set(state_idx, true);
+        visited.set(state_idx as usize, true);
         state = state.and_then(|s| quick_step(&s, map, extra_obs));
     }
     false
@@ -113,7 +114,7 @@ pub fn part_b(input: &str) -> Answer {
     let mut maybe_prev: Option<State> = None;
 
     // collect candidate (init, obstacle_pos) pairs along the nominal path
-    let mut candidate_loops: Vec<(State, Pos)> = Vec::new();
+    let mut candidate_loops: Vec<(State, Vec2i)> = Vec::new();
     while let Some((pos, _)) = state {
         if let Some(prev) = maybe_prev {
             if map[&pos] == Tile::Free(Visited::N) {

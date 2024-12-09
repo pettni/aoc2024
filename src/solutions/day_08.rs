@@ -1,8 +1,9 @@
+use crate::vec2::Vec2i;
 use crate::{math::gcd, Answer};
 use itertools::Itertools;
 use std::collections::HashMap;
 
-type Groups = HashMap<char, Vec<(usize, usize)>>;
+type Groups = HashMap<char, Vec<Vec2i>>;
 
 fn parse_input(input: &str) -> (Groups, usize, usize) {
     let lines: Vec<_> = input.lines().collect();
@@ -11,18 +12,17 @@ fn parse_input(input: &str) -> (Groups, usize, usize) {
     let antennas_iter = lines.iter().enumerate().flat_map(|(i, row)| {
         row.chars()
             .enumerate()
-            .flat_map(move |(j, c)| -> Option<(char, (usize, usize))> {
+            .flat_map(move |(j, c)| -> Option<(char, Vec2i)> {
                 match c {
                     '.' => None,
-                    _ => Some((c, (i, j))),
+                    _ => Some((c, Vec2i::new(i as isize, j as isize))),
                 }
             })
     });
 
-    let mut groups: HashMap<char, Vec<(usize, usize)>> = HashMap::new();
-    for (c, (i, j)) in antennas_iter {
-        let c_group = groups.entry(c).or_default();
-        c_group.push((i, j));
+    let mut groups: HashMap<char, Vec<Vec2i>> = HashMap::new();
+    for (c, p) in antennas_iter {
+        groups.entry(c).or_default().push(p);
     }
 
     (groups, h, w)
@@ -32,69 +32,48 @@ pub fn part_a(input: &str) -> Answer {
     let (groups, h, w) = parse_input(input);
     let res = groups
         .iter()
-        .flat_map(|(_, group)| find_antinodes::<false>(group, h, w))
+        .flat_map(|(_, group)| find_antinodes::<true>(group, h, w))
         .unique()
         .count();
     Answer::Number(res as i64)
 }
 
-fn find_antinodes<const PARTB: bool>(
-    group: &[(usize, usize)],
-    h: usize,
-    w: usize,
-) -> Vec<(isize, isize)> {
-    group
-        .iter()
-        .combinations(2)
-        .flat_map(|v| {
-            let (i0, j0) = (v[0].0 as isize, v[0].1 as isize);
-            let (i1, j1) = (v[1].0 as isize, v[1].1 as isize);
+fn find_antinodes<const PARTA: bool>(group: &[Vec2i], h: usize, w: usize) -> Vec<Vec2i> {
+    let pairs_iter =
+        (0..group.len()).flat_map(|i| (i + 1..group.len()).map(move |j| (&group[i], &group[j])));
 
-            let mut di = i1 - i0;
-            let mut dj = j1 - j0;
-
-            if PARTB {
-                let t = gcd(di.unsigned_abs() as u64, dj.unsigned_abs() as u64) as isize;
-                di /= t;
-                dj /= t;
-                let mut ret: Vec<_> = (0..)
-                    .map(|k| -> Option<(isize, isize)> {
-                        let i = i0 + k * di;
-                        let j = j0 + k * dj;
-                        if 0 <= i && i < h as isize && 0 <= j && j < w as isize {
-                            return Some((i, j));
-                        }
-                        None
-                    })
-                    .take_while(|k| k.is_some())
-                    .flatten()
-                    .collect();
-                let neg = (1..)
-                    .map(|k| -> Option<(isize, isize)> {
-                        let i = i0 - k * di;
-                        let j = j0 - k * dj;
-                        if 0 <= i && i < h as isize && 0 <= j && j < w as isize {
-                            return Some((i, j));
-                        }
-                        None
-                    })
-                    .take_while(|k| k.is_some())
-                    .flatten();
-                ret.extend(neg);
-                ret
-            } else {
-                vec![(i1 + di, j1 + dj), (i0 - di, j0 - dj)]
-            }
-        })
-        .filter(|(i, j)| *i >= 0 && *i < h as isize && *j >= 0 && *j < w as isize)
-        .collect()
+    if PARTA {
+        pairs_iter
+            .flat_map(|(p, q)| {
+                let dp = *p - *q;
+                [*p + dp, *q - dp]
+            })
+            .filter(|p| p.is_in_grid(h, w))
+            .collect()
+    } else {
+        pairs_iter
+            .flat_map(|(p, q)| {
+                let mut dp = *p - *q;
+                let t = gcd(dp.x.unsigned_abs() as u64, dp.y.unsigned_abs() as u64) as isize;
+                dp /= t;
+                (0..)
+                    .map(move |k| -> Vec2i { *p + dp * k })
+                    .take_while(|p| p.is_in_grid(h, w))
+                    .chain(
+                        (1..)
+                            .map(move |k| -> Vec2i { *p - dp * k })
+                            .take_while(|p| p.is_in_grid(h, w)),
+                    )
+            })
+            .collect()
+    }
 }
 
 pub fn part_b(input: &str) -> Answer {
     let (groups, h, w) = parse_input(input);
     let res = groups
         .iter()
-        .flat_map(|(_, group)| find_antinodes::<true>(group, h, w))
+        .flat_map(|(_, group)| find_antinodes::<false>(group, h, w))
         .unique()
         .count();
     Answer::Number(res as i64)

@@ -1,66 +1,5 @@
+use crate::vec2::{Dir, Vec2i};
 use std::ops::{Index, IndexMut};
-
-// 2D direction type
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Dir {
-    N = 0,
-    E = 1,
-    S = 2,
-    W = 3,
-}
-
-impl Dir {
-    pub fn turn_right(&self) -> Dir {
-        match self {
-            Dir::N => Dir::E,
-            Dir::E => Dir::S,
-            Dir::S => Dir::W,
-            Dir::W => Dir::N,
-        }
-    }
-
-    pub fn turn_left(&self) -> Dir {
-        match self {
-            Dir::N => Dir::W,
-            Dir::E => Dir::N,
-            Dir::S => Dir::E,
-            Dir::W => Dir::S,
-        }
-    }
-
-    pub fn turn_around(&self) -> Dir {
-        match self {
-            Dir::N => Dir::S,
-            Dir::E => Dir::W,
-            Dir::S => Dir::N,
-            Dir::W => Dir::E,
-        }
-    }
-}
-
-// 2D coordinate type
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct Pos {
-    pub r: usize,
-    pub c: usize,
-}
-
-impl Pos {
-    /// Move in direction.
-    pub fn step(&self, dir: &Dir, d: isize) -> Option<Pos> {
-        let (dr, dc) = match dir {
-            Dir::N => (-d, 0),
-            Dir::E => (0, d),
-            Dir::S => (d, 0),
-            Dir::W => (0, -d),
-        };
-        let new = Pos {
-            r: self.r.checked_add_signed(dr)?,
-            c: self.c.checked_add_signed(dc)?,
-        };
-        Some(new)
-    }
-}
 
 /// 2D map type.
 #[derive(Debug, Clone)]
@@ -81,8 +20,8 @@ impl<T: Clone> Map<T> {
     }
 
     /// Move in direction within map.
-    pub fn step_within(&self, pos: &Pos, dir: &Dir, d: isize) -> Option<Pos> {
-        let new = pos.step(dir, d)?;
+    pub fn step_within(&self, pos: &Vec2i, dir: &Dir, d: isize) -> Option<Vec2i> {
+        let new = pos.step(dir, d);
         if self.contains(&new) {
             Some(new)
         } else {
@@ -91,8 +30,8 @@ impl<T: Clone> Map<T> {
     }
 
     /// Check if coordinate is within map bounds.
-    pub fn contains(&self, pos: &Pos) -> bool {
-        pos.r < self.h && pos.c < self.w
+    pub fn contains(&self, p: &Vec2i) -> bool {
+        0 <= p.x && p.x < self.h as isize && 0 <= p.y && p.y < self.w as isize
     }
 
     /// Iterate over flattened map.
@@ -101,25 +40,25 @@ impl<T: Clone> Map<T> {
     }
 
     /// Get map element.
-    pub fn get(&self, p: &Pos) -> Option<&T> {
-        self.data.get(p.r * self.h + p.c)
+    pub fn get(&self, p: &Vec2i) -> Option<&T> {
+        self.data.get(p.x as usize * self.h + p.y as usize)
     }
 
     /// Get mutable map element.
-    pub fn get_mut(&mut self, p: &Pos) -> Option<&mut T> {
-        self.data.get_mut(p.r * self.h + p.c)
+    pub fn get_mut(&mut self, p: &Vec2i) -> Option<&mut T> {
+        self.data.get_mut(p.x as usize * self.h + p.y as usize)
     }
 }
 
-impl<T> Index<&Pos> for Map<T> {
+impl<T> Index<&Vec2i> for Map<T> {
     type Output = T;
-    fn index(&self, p: &Pos) -> &Self::Output {
-        &self.data[p.r * self.h + p.c]
+    fn index(&self, p: &Vec2i) -> &Self::Output {
+        &self.data[p.x as usize * self.h + p.y as usize]
     }
 }
 
-impl<T> IndexMut<&Pos> for Map<T> {
-    fn index_mut(&mut self, p: &Pos) -> &mut T {
-        &mut self.data[p.r * self.h + p.c]
+impl<T> IndexMut<&Vec2i> for Map<T> {
+    fn index_mut(&mut self, p: &Vec2i) -> &mut T {
+        &mut self.data[p.x as usize * self.h + p.y as usize]
     }
 }

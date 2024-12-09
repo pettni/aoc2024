@@ -1,9 +1,10 @@
 use std::fmt;
 
 pub mod map2d;
+pub mod math;
 pub mod parsing;
 pub mod solutions;
-pub mod math;
+pub mod vec2;
 
 #[derive(Debug, PartialEq, Default)]
 pub enum Answer {
