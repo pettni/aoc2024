@@ -1,3 +1,4 @@
+use crate::container::StaticStack;
 use crate::Answer;
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -37,30 +38,21 @@ fn is_solvable<const PARTB: bool>(problem: &Problem) -> bool {
     let n = problem.numbers.len();
 
     // stack-allocated 'stack' of fixed capacity
-    // using an array + ptr
-    let mut stack: [(u64, usize); 64] = [(0, 0); 64];
-    let mut stackptr = 0; // next unused element
+    let mut stack = StaticStack::<(u64, usize), 64>::new((0, 0));
+    stack.push((problem.numbers[0], 1));
 
-    stack[stackptr] = (problem.numbers[0], 1);
-    stackptr += 1;
-
-    while stackptr > 0 {
-        let (total, idx) = stack[stackptr - 1];
-        stackptr -= 1;
+    while let Some((total, idx)) = stack.pop() {
         if idx == n {
             if total == problem.target {
                 return true;
             }
         } else if total <= problem.target {
             let x = problem.numbers[idx];
-            stack[stackptr] = (total + x, idx + 1);
-            stackptr += 1;
+            stack.push((total + x, idx + 1));
             if PARTB {
-                stack[stackptr] = (total * next_pow10(x) + x, idx + 1);
-                stackptr += 1;
+                stack.push((total * next_pow10(x) + x, idx + 1));
             }
-            stack[stackptr] = (total * x, idx + 1);
-            stackptr += 1;
+            stack.push((total * x, idx + 1));
         }
     }
     false
