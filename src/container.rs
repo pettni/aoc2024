@@ -3,10 +3,10 @@ pub struct StaticStack<T, const CAPACITY: usize> {
     ptr: usize,
 }
 
-impl<T: Copy, const CAPACITY: usize> StaticStack<T, CAPACITY> {
-    pub fn new(default: T) -> Self {
+impl<T: Copy + Default, const CAPACITY: usize> StaticStack<T, CAPACITY> {
+    pub fn new() -> Self {
         StaticStack {
-            data: [default; CAPACITY],
+            data: [T::default(); CAPACITY],
             ptr: 0,
         }
     }
@@ -37,13 +37,19 @@ impl<T: Copy, const CAPACITY: usize> StaticStack<T, CAPACITY> {
     }
 }
 
+impl<T: Copy + Default, const CAPACITY: usize> Default for StaticStack<T, CAPACITY> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_stack() {
-        let mut stack = StaticStack::<u32, 32>::new(0);
+        let mut stack = StaticStack::<u32, 32>::new();
         assert!(stack.is_empty());
         assert_eq!(stack.pop(), None);
         stack.push(1);

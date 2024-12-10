@@ -37,22 +37,31 @@ fn next_pow10(x: u64) -> u64 {
 fn is_solvable<const PARTB: bool>(problem: &Problem) -> bool {
     let n = problem.numbers.len();
 
-    // stack-allocated 'stack' of fixed capacity
-    let mut stack = StaticStack::<(u64, usize), 64>::new((0, 0));
-    stack.push((problem.numbers[0], 1));
+    let mut stack = StaticStack::<(u64, usize), 64>::default(); // (remainder, idx)
+    stack.push((problem.target, 0));
 
-    while let Some((total, idx)) = stack.pop() {
+    while let Some((remainder, idx)) = stack.pop() {
         if idx == n {
-            if total == problem.target {
+            if remainder == 0 {
                 return true;
             }
-        } else if total <= problem.target {
-            let x = problem.numbers[idx];
-            stack.push((total + x, idx + 1));
-            if PARTB {
-                stack.push((total * next_pow10(x) + x, idx + 1));
+        } else {
+            let x = problem.numbers[n - idx - 1];
+            // remainder = f(head) + x => f(head) = remainder - x
+            if remainder >= x {
+                stack.push((remainder - x, idx + 1));
             }
-            stack.push((total * x, idx + 1));
+            if PARTB {
+                // remainder = f(head) .. x => f(head) = remainder / np10(x)
+                let np10 = next_pow10(x);
+                if remainder % np10 == x {
+                    stack.push((remainder / np10, idx + 1));
+                }
+            }
+            // remainder = f(head) * x => f(head) = remainder / x
+            if remainder % x == 0 {
+                stack.push((remainder / x, idx + 1));
+            }
         }
     }
     false
