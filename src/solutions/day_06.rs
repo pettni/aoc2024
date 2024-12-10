@@ -45,7 +45,7 @@ fn parse_board(chars: &[&str]) -> (State, Map<Tile>) {
 // Make one step.
 // Return None if we step outside of map.
 fn step(state: &State, map: &Map<Tile>, extra_obs: Option<&Vec2i>) -> Option<State> {
-    let pos_new = map.step_within(&state.0, &state.1, 1)?;
+    let pos_new = map.step_within(&state.0, state.1, 1)?;
     let new_tile = extra_obs
         .and_then(|x| {
             if *x == pos_new {
@@ -81,7 +81,7 @@ pub fn part_a(input: &str) -> Answer {
 // Return None if we step outside of map.
 fn quick_step(state: &State, map: &Map<Tile>, extra_obs: &Vec2i) -> Option<State> {
     let mut pos = state.0;
-    while let Some(pos_new) = map.step_within(&pos, &state.1, 1) {
+    while let Some(pos_new) = map.step_within(&pos, state.1, 1) {
         if pos_new == *extra_obs || map[&pos_new] == Tile::Obstacle {
             return Some((pos, state.1.turn_right()));
         }

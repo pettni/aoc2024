@@ -9,10 +9,11 @@ pub mod day_06;
 pub mod day_07;
 pub mod day_08;
 pub mod day_09;
+pub mod day_10;
 
 pub mod day_xx;
 
-pub const ALL: [Solutions; 9] = [
+pub const ALL: [Solutions; 10] = [
     (day_01::part_a, day_01::part_b),
     (day_02::part_a, day_02::part_b),
     (day_03::part_a, day_03::part_b),
@@ -22,4 +23,5 @@ pub const ALL: [Solutions; 9] = [
     (day_07::part_a, day_07::part_b),
     (day_08::part_a, day_08::part_b),
     (day_09::part_a, day_09::part_b),
+    (day_10::part_a, day_10::part_b),
 ];

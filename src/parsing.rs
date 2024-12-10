@@ -72,6 +72,16 @@ pub fn char_to_bool(c: char) -> Result<bool, String> {
     }
 }
 
+/// Character parser for int.
+pub fn char_to_u32(c: char) -> Result<u32, String> {
+    let tmp = c as u32 - '0' as u32;
+    if tmp <= 10 {
+        Ok(tmp)
+    } else {
+        Err("Parsing error".to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

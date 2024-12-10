@@ -52,19 +52,24 @@ impl Vec2i {
     }
 
     /// Move in direction.
-    pub fn step(&self, dir: &Dir, d: isize) -> Self {
-        let (dr, dc) = match dir {
+    pub fn step(&self, dir: Dir, d: isize) -> Self {
+        let (dx, dy) = match dir {
             Dir::N => (-d, 0),
             Dir::E => (0, d),
             Dir::S => (d, 0),
             Dir::W => (0, -d),
         };
-        Self::new(self.x + dr, self.y + dc)
+        Self::new(self.x + dx, self.y + dy)
     }
 
     /// Contained in [0, h)x(0, w)
     pub fn is_in_grid(&self, h: usize, w: usize) -> bool {
         self.x >= 0 && self.x < h as isize && self.y >= 0 && self.y < w as isize
+    }
+
+    /// Get linear row-major index.
+    pub fn linear_idx(&self, w: usize) -> usize {
+        (self.x * w as isize + self.y) as usize
     }
 }
 
