@@ -1,4 +1,5 @@
 use std::fmt;
+use std::path::PathBuf;
 
 pub mod container;
 pub mod map2d;
@@ -24,3 +25,7 @@ impl fmt::Display for Answer {
 }
 
 pub type Solutions = (fn(&str) -> Answer, fn(&str) -> Answer);
+
+pub fn get_default_data_path(day: u32) -> PathBuf {
+    PathBuf::from(format!("data/{:02}.txt", day))
+}

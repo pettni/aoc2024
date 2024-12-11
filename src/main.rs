@@ -1,4 +1,4 @@
-use aoc2024::Answer;
+use aoc2024::{get_default_data_path, Answer};
 use clap::{ArgAction, Parser, Subcommand};
 use std::fs;
 use std::hint::black_box;
@@ -35,10 +35,6 @@ struct RunArgs {
 struct RunAllArgs {
     #[arg(long, short, action=ArgAction::SetTrue)]
     pub benchmark: bool,
-}
-
-fn get_default_data_path(day: u32) -> PathBuf {
-    PathBuf::from(format!("data/{:02}.txt", day))
 }
 
 fn part_run(f: impl Fn(&str) -> Answer, input: &str, benchmark: bool) -> (Answer, Duration, u128) {

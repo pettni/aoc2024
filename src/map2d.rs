@@ -21,9 +21,9 @@ impl<T: Clone> Map<T> {
         let mut data = Vec::new();
 
         for (i, row) in iter.enumerate() {
-            h = h.max(i+1);
+            h = h.max(i + 1);
             for (j, x) in row.enumerate() {
-                w = w.max(j+1);
+                w = w.max(j + 1);
                 data.push(x);
             }
         }
