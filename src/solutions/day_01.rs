@@ -1,6 +1,6 @@
+use crate::hash::{FxHashMap, FxHashMapBuilder};
 use crate::parsing::parse_rows_of_ints;
 use crate::Answer;
-use std::collections::HashMap;
 
 pub fn part_a(input: &str) -> Answer {
     let (_, data) = parse_rows_of_ints(input).unwrap();
@@ -18,7 +18,7 @@ pub fn part_a(input: &str) -> Answer {
 pub fn part_b(input: &str) -> Answer {
     let (_, data) = parse_rows_of_ints(input).unwrap();
 
-    let mut counter: HashMap<i64, i64> = HashMap::new();
+    let mut counter: FxHashMap<i64, i64> = FxHashMap::with_capacity(1_000);
     for x in data.iter().map(|v| v[1]) {
         let val = counter.entry(x).or_insert(0);
         *val += 1;

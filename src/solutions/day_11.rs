@@ -1,13 +1,13 @@
+use crate::hash::{FxHashMap, FxHashMapBuilder};
 use crate::math::number_length;
-use std::{collections::HashMap, iter::successors};
-
 use crate::Answer;
+use std::iter::successors;
 
-type NumberCounter = HashMap<usize, usize>;
+type NumberCounter = FxHashMap<usize, usize>;
 
 // Keep track of how many we have of each number.
 fn transform_number_counter(counter: &NumberCounter) -> NumberCounter {
-    let mut ret: NumberCounter = NumberCounter::new();
+    let mut ret: NumberCounter = NumberCounter::with_capacity(4_000);
     for (x, c) in counter.iter() {
         let nl = number_length(*x as u64);
         match x {
@@ -29,7 +29,7 @@ fn transform_number_counter(counter: &NumberCounter) -> NumberCounter {
 
 // Recursive solution with memoization that maps
 //   (x, i) -> #numbers in output
-fn count_number_with_mem(x: usize, i: usize, mem: &mut HashMap<(usize, usize), usize>) -> usize {
+fn count_number_with_mem(x: usize, i: usize, mem: &mut FxHashMap<(usize, usize), usize>) -> usize {
     if i == 0 {
         return 1;
     } else if let Some(v) = mem.get(&(x, i)) {
@@ -50,8 +50,9 @@ fn count_number_with_mem(x: usize, i: usize, mem: &mut HashMap<(usize, usize), u
 }
 
 // Solve with aggregate transforms.
+#[allow(dead_code)]
 fn solve1(input: &str, num_iters: usize) -> Answer {
-    let mut counter: NumberCounter = NumberCounter::new();
+    let mut counter: NumberCounter = NumberCounter::with_capacity(4_000);
     for num in input.trim().split(" ").flat_map(str::parse::<i64>) {
         *counter.entry(num as usize).or_default() += 1;
     }
@@ -65,7 +66,7 @@ fn solve1(input: &str, num_iters: usize) -> Answer {
 // Solve with recursive memoization.
 #[allow(dead_code)]
 fn solve2(input: &str, num_iters: usize) -> Answer {
-    let mut mem = HashMap::<(usize, usize), usize>::new();
+    let mut mem = FxHashMap::<(usize, usize), usize>::with_capacity(150_000);
     let res = input
         .trim()
         .split(" ")
@@ -76,11 +77,11 @@ fn solve2(input: &str, num_iters: usize) -> Answer {
 }
 
 pub fn part_a(input: &str) -> Answer {
-    solve1(input, 25)
+    solve2(input, 25)
 }
 
 pub fn part_b(input: &str) -> Answer {
-    solve1(input, 75)
+    solve2(input, 75)
 }
 
 #[cfg(test)]

@@ -1,9 +1,9 @@
+use crate::hash::{FxHashMap, FxHashMapBuilder};
 use crate::vec2::Vec2i;
 use crate::{math::gcd, Answer};
 use itertools::Itertools;
-use std::collections::HashMap;
 
-type Groups = HashMap<char, Vec<Vec2i>>;
+type Groups = FxHashMap<char, Vec<Vec2i>>;
 
 fn parse_input(input: &str) -> (Groups, usize, usize) {
     let lines: Vec<_> = input.lines().collect();
@@ -20,7 +20,7 @@ fn parse_input(input: &str) -> (Groups, usize, usize) {
             })
     });
 
-    let mut groups: HashMap<char, Vec<Vec2i>> = HashMap::new();
+    let mut groups: Groups = Groups::new();
     for (c, p) in antennas_iter {
         groups.entry(c).or_default().push(p);
     }

@@ -2,6 +2,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 pub mod container;
+pub mod hash;
 pub mod map2d;
 pub mod math;
 pub mod parsing;
