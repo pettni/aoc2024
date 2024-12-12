@@ -1,4 +1,4 @@
-use std::ops::{Add, DivAssign, Mul, Sub};
+use std::ops::{Add, DivAssign, Mul, Neg, Sub};
 
 // 2D direction type
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -35,6 +35,13 @@ impl Dir {
             Dir::S => Dir::N,
             Dir::W => Dir::E,
         }
+    }
+}
+
+impl Neg for Dir {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        self.turn_around()
     }
 }
 

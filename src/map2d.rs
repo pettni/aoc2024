@@ -9,7 +9,7 @@ pub struct Map<T> {
     data: Vec<T>, // row-major
 }
 
-impl<T: Clone> Map<T> {
+impl<T> Map<T> {
     /// Create map from 2d matrix.
     pub fn from_iterators<I, J>(iter: I) -> Map<T>
     where
