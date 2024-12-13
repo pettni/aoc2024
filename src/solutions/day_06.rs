@@ -39,7 +39,7 @@ fn parse_board(chars: &[&str]) -> (State, Map<Tile>) {
         .find(|(r, c)| chars[*r].as_bytes()[*c] == b'^')
         .unwrap();
 
-    ((Vec2i::new(r as isize, c as isize), Dir::N), map)
+    ((Vec2i::new(r as i64, c as i64), Dir::N), map)
 }
 
 // Make one step.
@@ -69,7 +69,7 @@ pub fn part_a(input: &str) -> Answer {
     let mut visited = bitvec![0; 130 * 130];
 
     while let Some((pos, _)) = state {
-        visited.set((pos.x * 130 + pos.y) as usize, true);
+        visited.set(pos.linear_idx(130), true);
         state = state.and_then(|s| step(&s, &map, None));
     }
 
@@ -94,11 +94,11 @@ fn has_loop(state0: &State, map: &Map<Tile>, extra_obs: &Vec2i) -> bool {
     let mut state: Option<State> = Some(*state0);
     let mut visited = bitvec![0; 130 * 130 * 4];
     while let Some((pos, dir)) = state {
-        let state_idx = pos.x * 130 * 4 + pos.y * 4 + dir as isize;
-        if visited[state_idx as usize] {
+        let state_idx = 4 * pos.linear_idx(130) + dir as usize;
+        if visited[state_idx] {
             return true;
         }
-        visited.set(state_idx as usize, true);
+        visited.set(state_idx, true);
         state = state.and_then(|s| quick_step(&s, map, extra_obs));
     }
     false

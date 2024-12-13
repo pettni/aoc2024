@@ -41,7 +41,7 @@ impl<T> Map<T> {
 
     /// Move in direction within map.
     pub fn step_within(&self, pos: &Vec2i, dir: Dir, d: isize) -> Option<Vec2i> {
-        let new = pos.step(dir, d);
+        let new = pos.step(dir, d as i64);
         if self.contains(&new) {
             Some(new)
         } else {
@@ -51,7 +51,7 @@ impl<T> Map<T> {
 
     /// Check if coordinate is within map bounds.
     pub fn contains(&self, p: &Vec2i) -> bool {
-        0 <= p.x && p.x < self.h as isize && 0 <= p.y && p.y < self.w as isize
+        0 <= p.x && p.x < self.h as i64 && 0 <= p.y && p.y < self.w as i64
     }
 
     /// Iterate over coordinates.
@@ -60,8 +60,8 @@ impl<T> Map<T> {
         let w = self.w;
         (0..h).flat_map(move |r| {
             (0..w).map(move |c| Vec2i {
-                x: r as isize,
-                y: c as isize,
+                x: r as i64,
+                y: c as i64,
             })
         })
     }

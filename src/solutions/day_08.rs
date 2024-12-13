@@ -15,7 +15,7 @@ fn parse_input(input: &str) -> (Groups, usize, usize) {
             .flat_map(move |(j, c)| -> Option<(char, Vec2i)> {
                 match c {
                     '.' => None,
-                    _ => Some((c, Vec2i::new(i as isize, j as isize))),
+                    _ => Some((c, Vec2i::new(i as i64, j as i64))),
                 }
             })
     });
@@ -54,7 +54,7 @@ fn find_antinodes<const PARTA: bool>(group: &[Vec2i], h: usize, w: usize) -> Vec
         pairs_iter
             .flat_map(|(p, q)| {
                 let mut dp = *p - *q;
-                let t = gcd(dp.x.unsigned_abs() as u64, dp.y.unsigned_abs() as u64) as isize;
+                let t = gcd(dp.x.unsigned_abs(), dp.y.unsigned_abs()) as i64;
                 dp /= t;
                 (0..)
                     .map(move |k| -> Vec2i { *p + dp * k })

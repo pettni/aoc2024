@@ -48,18 +48,18 @@ impl Neg for Dir {
 // 2D coordinate type
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Vec2i {
-    pub x: isize,
-    pub y: isize,
+    pub x: i64,
+    pub y: i64,
 }
 
 impl Vec2i {
     #[inline]
-    pub const fn new(x: isize, y: isize) -> Self {
+    pub const fn new(x: i64, y: i64) -> Self {
         Self { x, y }
     }
 
     /// Move in direction.
-    pub fn step(&self, dir: Dir, d: isize) -> Self {
+    pub fn step(&self, dir: Dir, d: i64) -> Self {
         let (dx, dy) = match dir {
             Dir::N => (-d, 0),
             Dir::E => (0, d),
@@ -71,19 +71,26 @@ impl Vec2i {
 
     /// Contained in [0, h)x(0, w)
     pub fn is_in_grid(&self, h: usize, w: usize) -> bool {
-        self.x >= 0 && self.x < h as isize && self.y >= 0 && self.y < w as isize
+        self.x >= 0 && self.x < h as i64 && self.y >= 0 && self.y < w as i64
     }
 
     /// Get linear row-major index.
     pub fn linear_idx(&self, w: usize) -> usize {
-        (self.x * w as isize + self.y) as usize
+        (self.x * w as i64 + self.y) as usize
     }
 }
 
-impl Add for Vec2i {
+impl Add<Vec2i> for Vec2i {
     type Output = Self;
     fn add(self, rhs: Vec2i) -> Self::Output {
         Vec2i::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+impl Add<i64> for Vec2i {
+    type Output = Self;
+    fn add(self, rhs: i64) -> Self::Output {
+        Vec2i::new(self.x + rhs, self.y + rhs)
     }
 }
 
@@ -94,15 +101,15 @@ impl Sub for Vec2i {
     }
 }
 
-impl Mul<isize> for Vec2i {
+impl Mul<i64> for Vec2i {
     type Output = Self;
-    fn mul(self, rhs: isize) -> Self::Output {
+    fn mul(self, rhs: i64) -> Self::Output {
         Vec2i::new(self.x * rhs, self.y * rhs)
     }
 }
 
-impl DivAssign<isize> for Vec2i {
-    fn div_assign(&mut self, rhs: isize) {
+impl DivAssign<i64> for Vec2i {
+    fn div_assign(&mut self, rhs: i64) {
         self.x /= rhs;
         self.y /= rhs;
     }
