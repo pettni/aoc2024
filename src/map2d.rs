@@ -51,7 +51,7 @@ impl<T> Map<T> {
 
     /// Check if coordinate is within map bounds.
     pub fn contains(&self, p: &Vec2i) -> bool {
-        0 <= p.x && p.x < self.h as i64 && 0 <= p.y && p.y < self.w as i64
+        p.is_in_grid(self.h, self.w)
     }
 
     /// Iterate over coordinates.
@@ -60,8 +60,8 @@ impl<T> Map<T> {
         let w = self.w;
         (0..h).flat_map(move |r| {
             (0..w).map(move |c| Vec2i {
-                x: r as i64,
-                y: c as i64,
+                x: c as i64,
+                y: r as i64,
             })
         })
     }
@@ -118,6 +118,9 @@ mod tests {
         assert_eq!(map.w, 4);
 
         let p = Vec2i { x: 1, y: 0 };
+        assert_eq!(map[&p], 2);
+
+        let p = Vec2i { x: 0, y: 1 };
         assert_eq!(map[&p], 5);
     }
 
@@ -126,16 +129,16 @@ mod tests {
         let data = vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8], vec![9, 10, 11, 12]];
         let map = Map::from_vecs(data);
 
-        let p = Vec2i { x: 1, y: 2 };
+        let p = Vec2i { x: 2, y: 1 };
         assert_eq!(*map.get(&p).unwrap(), 7);
 
-        let p = Vec2i { x: -1, y: 0 };
+        let p = Vec2i { x: 0, y: -1 };
         assert_eq!(map.get(&p), None);
 
-        let p = Vec2i { x: 2, y: -1 };
+        let p = Vec2i { x: -1, y: 2 };
         assert_eq!(map.get(&p), None);
 
-        let p = Vec2i { x: 10, y: 1 };
+        let p = Vec2i { x: 1, y: 10 };
         assert_eq!(map.get(&p), None);
     }
 
@@ -148,7 +151,7 @@ mod tests {
 
         for i in 0..12 {
             let item = iter.next().unwrap();
-            assert_eq!(item.0, Vec2i { x: i / 4, y: i % 4 });
+            assert_eq!(item.0, Vec2i { y: i / 4, x: i % 4 });
             assert_eq!(*item.1, i + 1);
         }
     }

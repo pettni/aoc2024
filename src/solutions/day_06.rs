@@ -39,7 +39,7 @@ fn parse_board(chars: &[&str]) -> (State, Map<Tile>) {
         .find(|(r, c)| chars[*r].as_bytes()[*c] == b'^')
         .unwrap();
 
-    ((Vec2i::new(r as i64, c as i64), Dir::N), map)
+    ((Vec2i::new(c as i64, r as i64), Dir::N), map)
 }
 
 // Make one step.

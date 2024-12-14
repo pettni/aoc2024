@@ -59,24 +59,25 @@ impl Vec2i {
     }
 
     /// Move in direction.
+    /// This uses an "image" "x-east, y-south" coordinate system.
     pub fn step(&self, dir: Dir, d: i64) -> Self {
         let (dx, dy) = match dir {
-            Dir::N => (-d, 0),
-            Dir::E => (0, d),
-            Dir::S => (d, 0),
-            Dir::W => (0, -d),
+            Dir::N => (0, -d),
+            Dir::E => (d, 0),
+            Dir::S => (0, d),
+            Dir::W => (-d, 0),
         };
         Self::new(self.x + dx, self.y + dy)
     }
 
-    /// Contained in [0, h)x(0, w)
+    /// Check if (x,y) is contained in [0, w)x(0, h)
     pub fn is_in_grid(&self, h: usize, w: usize) -> bool {
-        self.x >= 0 && self.x < h as i64 && self.y >= 0 && self.y < w as i64
+        self.x >= 0 && self.x < w as i64 && self.y >= 0 && self.y < h as i64
     }
 
     /// Get linear row-major index.
     pub fn linear_idx(&self, w: usize) -> usize {
-        (self.x * w as i64 + self.y) as usize
+        (self.y * w as i64 + self.x) as usize
     }
 }
 
