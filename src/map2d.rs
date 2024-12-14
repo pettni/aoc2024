@@ -1,7 +1,13 @@
 use crate::vec2::{Dir, Vec2i};
-use std::ops::{Index, IndexMut};
+use std::{
+    fmt,
+    ops::{Index, IndexMut},
+};
 
 /// 2D map type.
+///
+/// Map<T> is indexed by Vec2i using "image" coordinates, i.e.
+/// X-east, Y-south.
 #[derive(Debug, Clone)]
 pub struct Map<T> {
     pub h: usize,
@@ -10,7 +16,31 @@ pub struct Map<T> {
 }
 
 impl<T> Map<T> {
-    /// Create map from 2d matrix.
+    /// Create map filled with constant.
+    pub fn new(h: usize, w: usize) -> Map<T>
+    where
+        T: Clone + Default,
+    {
+        Map {
+            h,
+            w,
+            data: vec![T::default(); h * w],
+        }
+    }
+
+    /// Create map filled with constant.
+    pub fn new_constant(h: usize, w: usize, t: T) -> Map<T>
+    where
+        T: Clone,
+    {
+        Map {
+            h,
+            w,
+            data: vec![t; h * w],
+        }
+    }
+
+    /// Create map from 2d iterator.
     pub fn from_iterators<I, J>(iter: I) -> Map<T>
     where
         I: Iterator<Item = J>,
@@ -93,6 +123,22 @@ impl<T> Map<T> {
     }
 }
 
+impl<T> fmt::Display for Map<T>
+where
+    T: fmt::Display + Sized,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for row in 0..self.h {
+            for col in 0..self.w {
+                write!(f, "{:}", self.data[self.w * row + col])?
+            }
+            writeln!(f)?
+        }
+        Ok(())
+    }
+}
+
+/// Index with Vec2i = (x, y).
 impl<T> Index<&Vec2i> for Map<T> {
     type Output = T;
     fn index(&self, p: &Vec2i) -> &Self::Output {
@@ -100,9 +146,42 @@ impl<T> Index<&Vec2i> for Map<T> {
     }
 }
 
+/// Mutable index with Vec2i = (x, y).
 impl<T> IndexMut<&Vec2i> for Map<T> {
-    fn index_mut(&mut self, p: &Vec2i) -> &mut T {
+    fn index_mut(&mut self, p: &Vec2i) -> &mut Self::Output {
         &mut self.data[p.linear_idx(self.w)]
+    }
+}
+
+/// Index with two integers (y, x).
+impl<T> Index<(usize, usize)> for Map<T> {
+    type Output = T;
+    fn index(&self, yx: (usize, usize)) -> &Self::Output {
+        let (y, x) = yx;
+        &self.data[y * self.w + x]
+    }
+}
+
+/// Mutable index with two integers (y, x).
+impl<T> IndexMut<(usize, usize)> for Map<T> {
+    fn index_mut(&mut self, yx: (usize, usize)) -> &mut Self::Output {
+        let (y, x) = yx;
+        &mut self.data[y * self.w + x]
+    }
+}
+
+/// Row indexing.
+impl<T> Index<usize> for Map<T> {
+    type Output = [T];
+    fn index(&self, y: usize) -> &Self::Output {
+        &self.data[y * self.w..(y + 1) * self.w]
+    }
+}
+
+/// Mutable row indexing.
+impl<T> IndexMut<usize> for Map<T> {
+    fn index_mut(&mut self, y: usize) -> &mut Self::Output {
+        &mut self.data[y * self.w..(y + 1) * self.w]
     }
 }
 
@@ -119,9 +198,38 @@ mod tests {
 
         let p = Vec2i { x: 1, y: 0 };
         assert_eq!(map[&p], 2);
+        assert_eq!(map[(0, 1)], 2);
 
         let p = Vec2i { x: 0, y: 1 };
         assert_eq!(map[&p], 5);
+        assert_eq!(map[(1, 0)], 5);
+    }
+
+    #[test]
+    fn test_map_index() {
+        let data = vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8], vec![9, 10, 11, 12]];
+        let mut map = Map::from_vecs(data.clone());
+        for y in 0..3 {
+            for x in 0..4 {
+                assert_eq!(map[(y, x)], data[y][x]);
+                assert_eq!(
+                    map[&Vec2i {
+                        x: x as i64,
+                        y: y as i64
+                    }],
+                    data[y][x]
+                );
+            }
+            assert_eq!(map[y], data[y]);
+        }
+
+        // mutable indexing
+        map[1][1] = 66;
+        map[(1, 2)] = 77;
+        map[&Vec2i { x: 3, y: 1 }] = 88;
+        assert_eq!(map[&Vec2i { x: 1, y: 1 }], 66);
+        assert_eq!(map[&Vec2i { x: 2, y: 1 }], 77);
+        assert_eq!(map[&Vec2i { x: 3, y: 1 }], 88);
     }
 
     #[test]

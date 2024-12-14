@@ -57,7 +57,7 @@ mod tests {
         /* day 11 */ (Answer::Number(185205), Answer::Number(221280540398419)),
         /* day 12 */ (Answer::Number(1465112), Answer::Number(893790)),
         /* day 13 */ (Answer::Number(37128), Answer::Number(74914228471331)),
-        /* day 14 */ (Answer::Unimplemented, Answer::Unimplemented),
+        /* day 14 */ (Answer::Number(236628054), Answer::Number(7584)),
         /* day 15 */ (Answer::Unimplemented, Answer::Unimplemented),
         /* day 16 */ (Answer::Unimplemented, Answer::Unimplemented),
         /* day 17 */ (Answer::Unimplemented, Answer::Unimplemented),

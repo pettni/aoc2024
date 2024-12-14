@@ -1,4 +1,9 @@
+use crate::map2d::Map;
+use crate::math::crt2;
 use crate::{vec2::Vec2i, Answer};
+
+const H: usize = 103;
+const W: usize = 101;
 
 #[derive(Debug, PartialEq)]
 struct Robot {
@@ -32,13 +37,11 @@ fn simulate_robot(p: Vec2i, v: Vec2i, h: usize, w: usize, t: usize) -> Vec2i {
 }
 
 fn solve_part_a(input: &str, h: usize, w: usize) -> Answer {
-    let robots = input.trim().lines().map(parse_robot).collect::<Vec<_>>();
-
     let mut n_tl = 0;
     let mut n_tr = 0;
     let mut n_br = 0;
     let mut n_bl = 0;
-    for robot in robots.iter() {
+    for robot in input.trim().lines().map(parse_robot) {
         let new_pos = simulate_robot(robot.p, robot.v, h, w, 100);
         let top = new_pos.y < h as i64 / 2;
         let bot = new_pos.y > h as i64 / 2;
@@ -59,12 +62,37 @@ fn solve_part_a(input: &str, h: usize, w: usize) -> Answer {
 }
 
 pub fn part_a(input: &str) -> Answer {
-    solve_part_a(input, 103, 101)
+    solve_part_a(input, H, W)
 }
 
+fn plot_robots(positions: &[Vec2i], h: usize, w: usize) {
+    let mut picture = Map::<char>::new_constant(h, w, ' ');
+    for p in positions.iter() {
+        picture[p] = 'x';
+    }
+    println!("{}", picture);
+}
+
+const PLOT: bool = false;
+
 pub fn part_b(input: &str) -> Answer {
-    let _ = input;
-    Answer::default()
+    // observed two series that show "patterns":
+    // 65 + 103 * i
+    //  9 + 101 * j
+    // Use CRT to find first number where those two intersect. Find x s.t.
+    //  x % 103 = 65
+    //  x % 101 = 9
+    let t = crt2(103, 65, 101, 9).unwrap();
+    if PLOT {
+        let positions = input
+            .trim()
+            .lines()
+            .map(parse_robot)
+            .map(|r| simulate_robot(r.p, r.v, 103, 101, t as usize))
+            .collect::<Vec<_>>();
+        plot_robots(&positions, H, W);
+    }
+    Answer::Number(t)
 }
 
 #[cfg(test)]

@@ -20,14 +20,14 @@ pub fn number_length(x: u64) -> u64 {
     res
 }
 
-/// Solve normalized Diophantine equation ax + by = 1.
-/// Returns a solution (x, y) if one exists, and None otherwise.
-pub fn diophantine_normalized(a: i64, b: i64) -> Option<(i64, i64)> {
+/// Solve normalized Bezout's identity.
+/// Find x and y s.t. ax + by = 1,  assuming that a, b are co-prime.
+pub fn bezout(a: i64, b: i64) -> Option<(i64, i64)> {
     if a < 0 {
-        return diophantine_normalized(-a, b).map(|(x, y)| (-x, y));
+        return bezout(-a, b).map(|(x, y)| (-x, y));
     }
     if b < 0 {
-        return diophantine_normalized(a, -b).map(|(x, y)| (x, -y));
+        return bezout(a, -b).map(|(x, y)| (x, -y));
     }
 
     let (mut ra, mut rb) = (a, b);
@@ -66,7 +66,7 @@ pub fn diophantine_normalized(a: i64, b: i64) -> Option<(i64, i64)> {
     Some((c1, c2))
 }
 
-/// Solve Diophantine equation ax + by = 1.
+/// Solve Diophantine equation ax + by = c.
 /// Returns numbers (x0, y0, u, v) that define all solutions as
 ///   (x, y) = (x0, y0) + k (u, v) for k \in Z
 pub fn diophantine(a: i64, b: i64, c: i64) -> Option<(i64, i64, i64, i64)> {
@@ -76,13 +76,35 @@ pub fn diophantine(a: i64, b: i64, c: i64) -> Option<(i64, i64, i64, i64)> {
     }
 
     // solve normalized equation an x + bn x = 1
-    let (mut x, mut y) = diophantine_normalized(a / gcd_ab, b / gcd_ab)?;
+    let (mut x, mut y) = bezout(a / gcd_ab, b / gcd_ab)?;
 
     // multiply by cn to get solution to an x + bn y = cn, or equivalently to ax + by = c
     x *= c / gcd_ab;
     y *= c / gcd_ab;
 
     Some((x, y, b / gcd_ab, -a / gcd_ab))
+}
+
+/// Construct Chinese remainder theorem solution for two equations
+/// Find x s.t.
+///  x % n1 = a1
+///  x % n2 = a2
+pub fn crt2(n1: i64, a1: i64, n2: i64, a2: i64) -> Option<i64> {
+    let (m1, m2) = bezout(n1, n2)?;
+    let ret = (a1 % n1) * m2 * n2 + (a2 % n2) * m1 * n1;
+    Some(ret.rem_euclid(n1 * n2))
+}
+
+/// Construct Chinese remainder theorem solution
+/// Find x s.t.
+///  x % nn[i] = aa[i],  i = 1..k
+pub fn crt(nn: &[i64], aa: &[i64]) -> Option<i64> {
+    let (mut n, mut x) = (nn[0], aa[0]);
+    for (ni, ai) in nn[1..].iter().zip(aa[1..].iter()) {
+        x = crt2(n, x, *ni, *ai)?;
+        n *= ni;
+    }
+    Some(x)
 }
 
 #[cfg(test)]
@@ -108,38 +130,38 @@ mod tests {
     }
 
     #[test]
-    fn test_diophantine_normalized_1() {
-        let (x, y) = diophantine_normalized(1027, 712).unwrap();
+    fn test_bezout_1() {
+        let (x, y) = bezout(1027, 712).unwrap();
         assert_eq!(1027 * x + 712 * y, 1);
         assert_eq!((x, y), (-165, 238)); // note: testing for a specific solution
     }
 
     #[test]
-    fn test_diophantine_normalized_2() {
-        assert_eq!(diophantine_normalized(4, 8), None); // not co-prime
+    fn test_bezout_2() {
+        assert_eq!(bezout(4, 8), None); // not co-prime
     }
 
     #[test]
-    fn test_diophantine_normalized_3() {
-        let (x, y) = diophantine_normalized(8, 1).unwrap();
+    fn test_bezout_3() {
+        let (x, y) = bezout(8, 1).unwrap();
         assert_eq!(8 * x + y, 1);
     }
 
     #[test]
-    fn test_diophantine_normalized_4a() {
-        let (x, _) = diophantine_normalized(1, 0).unwrap();
+    fn test_bezout_4a() {
+        let (x, _) = bezout(1, 0).unwrap();
         assert_eq!(x, 1);
     }
 
     #[test]
-    fn test_diophantine_normalized_4b() {
-        let (_, y) = diophantine_normalized(0, 1).unwrap();
+    fn test_bezout_4b() {
+        let (_, y) = bezout(0, 1).unwrap();
         assert_eq!(y, 1);
     }
 
     #[test]
-    fn test_diophantine_normalized_4c() {
-        assert_eq!(diophantine_normalized(2, 0), None);
+    fn test_bezout_4c() {
+        assert_eq!(bezout(2, 0), None);
     }
 
     #[test]
@@ -201,5 +223,52 @@ mod tests {
         for k in -10..10 {
             assert_eq!(-4 * (x + k * u) - 16 * (y + k * v), -64);
         }
+    }
+
+    #[test]
+    fn test_crt2_1() {
+        let x = crt2(3, 2, 5, 3).unwrap();
+        assert_eq!(x % 3, 2);
+        assert_eq!(x % 5, 3);
+    }
+
+    #[test]
+    fn test_crt2_2() {
+        assert_eq!(crt2(3, 2, 6, 3), None);
+    }
+
+    #[test]
+    fn test_crt_1() {
+        let ns = vec![3, 5];
+        let aa = vec![2, 3];
+        let x = crt(&ns, &aa).unwrap();
+        assert_eq!(x % 3, 2);
+        assert_eq!(x % 5, 3);
+    }
+
+    #[test]
+    fn test_crt_2() {
+        let ns = vec![7, 5, 12];
+        let aa = vec![3, 3, 4];
+        let x = crt(&ns, &aa).unwrap();
+        assert_eq!(x, 388);
+    }
+
+    #[test]
+    fn test_crt_3() {
+        let ns = vec![7, 5, 12, 19, 101];
+        let aa = vec![3, 3, 4, 18, 81];
+        let x = crt(&ns, &aa).unwrap();
+        assert!(x < ns.iter().product());
+        for (n, a) in ns.iter().zip(aa.iter()) {
+            assert_eq!(x % n, *a);
+        }
+    }
+
+    #[test]
+    fn test_crt_4() {
+        let ns = vec![7, 5, 12, 19, 102];  // 12 and 102 not co-prime
+        let aa = vec![3, 3, 4, 18, 81];
+        assert_eq!(crt(&ns, &aa), None);
     }
 }
