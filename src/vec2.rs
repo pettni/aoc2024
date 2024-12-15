@@ -10,6 +10,16 @@ pub enum Dir {
 }
 
 impl Dir {
+    pub fn from_char(c: char) -> Option<Self> {
+        match c {
+            '^' => Some(Dir::N),
+            '>' => Some(Dir::E),
+            'v' => Some(Dir::S),
+            '<' => Some(Dir::W),
+            _ => None,
+        }
+    }
+
     pub fn turn_right(&self) -> Dir {
         match self {
             Dir::N => Dir::E,

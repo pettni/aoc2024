@@ -2,6 +2,7 @@ use crate::vec2::{Dir, Vec2i};
 use std::{
     fmt,
     ops::{Index, IndexMut},
+    str::Lines,
 };
 
 /// 2D map type.
@@ -58,6 +59,15 @@ impl<T> Map<T> {
             }
         }
         Map { h, w, data }
+    }
+
+    /// Create map from lines.
+    pub fn from_lines<F>(lines: Lines, f: &F) -> Map<T>
+    where
+        F: Fn(char) -> T,
+    {
+        let iters = lines.map(|l| l.chars().map(f));
+        Map::from_iterators(iters)
     }
 
     /// Create map from 2d matrix.
@@ -132,7 +142,9 @@ where
             for col in 0..self.w {
                 write!(f, "{:}", self.data[self.w * row + col])?
             }
-            writeln!(f)?
+            if row < self.h - 1 {
+                writeln!(f)?
+            }
         }
         Ok(())
     }

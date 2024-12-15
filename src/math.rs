@@ -9,6 +9,11 @@ pub fn gcd(mut n: u64, mut m: u64) -> u64 {
     n
 }
 
+/// Least common multiple of two numbers.
+pub fn lcm(n: u64, m: u64) -> u64 {
+    n * (m / gcd(n, m))
+}
+
 /// Get number of digits in an integer.
 pub fn number_length(x: u64) -> u64 {
     let mut xc = x;
@@ -119,6 +124,16 @@ mod tests {
         assert_eq!(gcd(6, 3), 3);
         assert_eq!(gcd(21, 6), 3);
         assert_eq!(gcd(48, 56), 8);
+    }
+
+    #[test]
+    fn test_lcm() {
+        assert_eq!(lcm(1, 1), 1);
+        assert_eq!(lcm(1, 100), 100);
+        assert_eq!(lcm(100, 1), 100);
+        assert_eq!(lcm(6, 3), 6);
+        assert_eq!(lcm(21, 6), 42);
+        assert_eq!(lcm(48, 56), 336);
     }
 
     #[test]
@@ -267,7 +282,7 @@ mod tests {
 
     #[test]
     fn test_crt_4() {
-        let ns = vec![7, 5, 12, 19, 102];  // 12 and 102 not co-prime
+        let ns = vec![7, 5, 12, 19, 102]; // 12 and 102 not co-prime
         let aa = vec![3, 3, 4, 18, 81];
         assert_eq!(crt(&ns, &aa), None);
     }
