@@ -1,7 +1,7 @@
 use std::ops::{Add, DivAssign, Mul, Neg, Sub};
 
 // 2D direction type
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Ord, PartialOrd)]
 pub enum Dir {
     N = 0,
     E = 1,
@@ -56,7 +56,7 @@ impl Neg for Dir {
 }
 
 // 2D coordinate type
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Ord, PartialOrd)]
 pub struct Vec2i {
     pub x: i64,
     pub y: i64,

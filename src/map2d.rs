@@ -79,6 +79,15 @@ impl<T> Map<T> {
         Map { h, w, data }
     }
 
+    // Create new map with same size.
+    pub fn clone_with_value<S: Clone>(&self, val: S) -> Map<S> {
+        Map {
+            h: self.h,
+            w: self.w,
+            data: vec![val; self.h * self.w],
+        }
+    }
+
     /// Move in direction within map.
     pub fn step_within(&self, pos: &Vec2i, dir: Dir, d: isize) -> Option<Vec2i> {
         let new = pos.step(dir, d as i64);
