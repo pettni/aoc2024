@@ -15,12 +15,14 @@ pub enum Answer {
     #[default]
     Unimplemented,
     Number(i64),
+    String(&'static str),
 }
 
 impl fmt::Display for Answer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Answer::Number(n) => n.fmt(f),
+            Answer::String(s) => s.fmt(f),
             Answer::Unimplemented => "Unimplemented".fmt(f),
         }
     }
