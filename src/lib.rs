@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 pub mod container;
 pub mod hash;
+pub mod heap;
 pub mod map2d;
 pub mod math;
 pub mod parsing;

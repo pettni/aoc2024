@@ -1,11 +1,12 @@
+use crate::heap::MinHeap;
 use crate::map2d::Map;
 use crate::vec2::{Dir, Vec2i};
 use crate::Answer;
-use std::collections::{BinaryHeap, VecDeque};
+use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 struct State {
-    ncost: i64, // use negative cost since we have a max-heap
+    cost: i64,
     pos: Vec2i,
     dir: Dir,
 }
@@ -17,8 +18,8 @@ pub fn part_a(input: &str) -> Answer {
     let start = map.iter().find(|(_, v)| **v == 'S').unwrap().0;
     let end = map.iter().find(|(_, v)| **v == 'E').unwrap().0;
     let cost_map = solve_forward((start, Dir::E), end, &map);
-    let optimal_ncost = cost_map[&end].iter().flatten().max().unwrap();
-    Answer::Number(-optimal_ncost)
+    let optimal_cost = cost_map[&end].iter().flatten().max().unwrap();
+    Answer::Number(*optimal_cost)
 }
 
 pub fn part_b(input: &str) -> Answer {
@@ -30,39 +31,76 @@ pub fn part_b(input: &str) -> Answer {
     Answer::Number(result)
 }
 
+fn cost_to_go((pos, dir): (Vec2i, Dir), end: Vec2i) -> i64 {
+    let linear = pos.manhattan(&end) as i64;
+    let dp = end - pos;
+    if dp.x == 0 && dir == Dir::N {
+        return linear;
+    }
+    if dp.y == 0 && dir == Dir::E {
+        return linear;
+    }
+    match dir {
+        Dir::N => linear + 1000,
+        Dir::E => linear + 1000,
+        Dir::S => linear + 2000,
+        Dir::W => linear + 2000,
+    }
+}
+
 fn solve_forward((pos, dir): (Vec2i, Dir), end: Vec2i, map: &Map<char>) -> CostMap {
-    let mut queue: BinaryHeap<State> = BinaryHeap::new(); // max-heap
+    let mut prio_queue = MinHeap::new(|s1: &State, s2: &State| s1.cost.cmp(&s2.cost));
     let mut cost_map = map.clone_with_value::<[Option<i64>; 4]>([None, None, None, None]);
+    let mut best_ncost: Option<i64> = None;
 
-    queue.push(State { pos, dir, ncost: 0 });
+    prio_queue.push(State { pos, dir, cost: 0 });
 
-    while let Some(State { pos, dir, ncost }) = queue.pop() {
-        if map[&pos] == '#' {
-            continue; // ran into a wall
+    while let Some(state) = prio_queue.peek() {
+        let State { pos, dir, cost } = *state;
+        let not_competitive = best_ncost
+            .map(|best_ncost| {
+                let ctg = cost_to_go((pos, dir), end);
+                best_ncost < cost + ctg
+            })
+            .unwrap_or_default();
+        let is_wall = map[&pos] == '#';
+        let already_visited = cost_map[&pos][dir as usize].is_some();
+        if not_competitive || is_wall || already_visited {
+            // do not recurse
+            prio_queue.pop();
+            continue;
         }
-        if cost_map[&pos][dir as usize].is_some() {
-            continue; // already visited (with lower or equal cost)
-        }
-        cost_map[&pos][dir as usize] = Some(ncost);
+        cost_map[&pos][dir as usize] = Some(cost);
         if pos == end {
-            continue; // reached goal
+            // reached end
+            best_ncost = best_ncost.or(Some(cost));
+            prio_queue.pop();
+            continue;
         }
 
-        queue.push(State {
+        // grow tree
+
+        // 'replace' to save some heap work
+        prio_queue.replace(State {
             pos: pos.step(dir, 1),
             dir,
-            ncost: ncost - 1,
+            cost: cost + 1,
         });
-        queue.push(State {
-            pos,
-            dir: dir.turn_left(),
-            ncost: ncost - 1000,
-        });
-        queue.push(State {
-            pos,
-            dir: dir.turn_right(),
-            ncost: ncost - 1000,
-        });
+        // only try turning if we don't turn towards a wall
+        if map[&pos.step(dir.turn_left(), 1)] != '#' {
+            prio_queue.push(State {
+                pos,
+                dir: dir.turn_left(),
+                cost: cost + 1000,
+            });
+        }
+        if map[&pos.step(dir.turn_right(), 1)] != '#' {
+            prio_queue.push(State {
+                pos,
+                dir: dir.turn_right(),
+                cost: cost + 1000,
+            });
+        }
     }
 
     cost_map
@@ -71,19 +109,19 @@ fn solve_forward((pos, dir): (Vec2i, Dir), end: Vec2i, map: &Map<char>) -> CostM
 fn solve_reverse(cost_map: &CostMap, end: Vec2i) -> i64 {
     // now do a reverse search along all paths that are consistent with the cost-map
     let mut rqueue: VecDeque<State> = VecDeque::new();
-    let opt_cost = cost_map[&end].iter().flatten().max().unwrap();
+    let opt_cost = cost_map[&end].iter().flatten().min().unwrap();
     for dir in [Dir::N, Dir::E, Dir::S, Dir::W] {
         rqueue.push_back(State {
             pos: end,
             dir,
-            ncost: *opt_cost,
+            cost: *opt_cost,
         });
     }
 
     let mut optimal_tiles = cost_map.clone_with_value(false);
-    while let Some(State { pos, dir, ncost }) = rqueue.pop_front() {
+    while let Some(State { pos, dir, cost }) = rqueue.pop_front() {
         if !cost_map[&pos][dir as usize]
-            .map(|c| c == ncost)
+            .map(|c| c == cost)
             .unwrap_or_default()
         {
             continue; // not on an optimal path
@@ -95,17 +133,17 @@ fn solve_reverse(cost_map: &CostMap, end: Vec2i) -> i64 {
         rqueue.push_back(State {
             pos: pos.step(-dir, 1),
             dir,
-            ncost: ncost + 1,
+            cost: cost - 1,
         });
         rqueue.push_back(State {
             pos,
             dir: dir.turn_left(),
-            ncost: ncost + 1000,
+            cost: cost - 1000,
         });
         rqueue.push_back(State {
             pos,
             dir: dir.turn_right(),
-            ncost: ncost + 1000,
+            cost: cost - 1000,
         });
     }
 

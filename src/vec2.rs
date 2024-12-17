@@ -89,6 +89,11 @@ impl Vec2i {
     pub fn linear_idx(&self, w: usize) -> usize {
         (self.y * w as i64 + self.x) as usize
     }
+
+    /// Manhattan distance.
+    pub fn manhattan(&self, other: &Vec2i) -> u64 {
+        (self.x - other.x).unsigned_abs() + (self.y - other.y).unsigned_abs()
+    }
 }
 
 impl Add<Vec2i> for Vec2i {
