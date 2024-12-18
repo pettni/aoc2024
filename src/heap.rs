@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::fmt;
 
 pub struct MinHeap<T, F>
 where
@@ -6,6 +7,16 @@ where
 {
     data: Vec<T>,
     cmp: F,
+}
+
+impl<T, F> fmt::Debug for MinHeap<T, F>
+where
+    T: fmt::Debug,
+    F: Fn(&T, &T) -> Ordering,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MinHeap").field("data", &self.data).finish()
+    }
 }
 
 impl<T, F> MinHeap<T, F>
@@ -21,6 +32,10 @@ where
             data: Vec::with_capacity(capacity),
             cmp,
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.data.clear();
     }
 
     pub fn push(&mut self, t: T) {

@@ -80,11 +80,20 @@ impl<T> Map<T> {
     }
 
     // Create new map with same size.
-    pub fn clone_with_value<S: Clone>(&self, val: S) -> Map<S> {
+    pub fn same_size_with<S: Clone>(&self, val: S) -> Map<S> {
         Map {
             h: self.h,
             w: self.w,
             data: vec![val; self.h * self.w],
+        }
+    }
+
+    pub fn set_constant(&mut self, t: &T)
+    where
+        T: Copy,
+    {
+        for el in self.data.iter_mut() {
+            *el = *t;
         }
     }
 

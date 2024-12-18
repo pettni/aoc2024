@@ -50,7 +50,7 @@ fn cost_to_go((pos, dir): (Vec2i, Dir), end: Vec2i) -> i64 {
 
 fn solve_forward((pos, dir): (Vec2i, Dir), end: Vec2i, map: &Map<char>) -> CostMap {
     let mut prio_queue = MinHeap::new(|s1: &State, s2: &State| s1.cost.cmp(&s2.cost));
-    let mut cost_map = map.clone_with_value::<[Option<i64>; 4]>([None, None, None, None]);
+    let mut cost_map = map.same_size_with::<[Option<i64>; 4]>([None, None, None, None]);
     let mut best_ncost: Option<i64> = None;
 
     prio_queue.push(State { pos, dir, cost: 0 });
@@ -118,7 +118,7 @@ fn solve_reverse(cost_map: &CostMap, end: Vec2i) -> i64 {
         });
     }
 
-    let mut optimal_tiles = cost_map.clone_with_value(false);
+    let mut optimal_tiles = cost_map.same_size_with(false);
     while let Some(State { pos, dir, cost }) = rqueue.pop_front() {
         if !cost_map[&pos][dir as usize]
             .map(|c| c == cost)

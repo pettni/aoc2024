@@ -9,6 +9,8 @@ pub enum Dir {
     W = 3,
 }
 
+pub const DIRECTIONS: [Dir; 4] = [Dir::N, Dir::E, Dir::S, Dir::W];
+
 impl Dir {
     pub fn from_char(c: char) -> Option<Self> {
         match c {
