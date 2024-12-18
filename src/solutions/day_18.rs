@@ -1,11 +1,8 @@
-use std::cmp::Ordering;
+use std::collections::VecDeque;
 
-use crate::heap::MinHeap;
 use crate::map2d::Map;
 use crate::vec2::{Dir, Vec2i, DIRECTIONS};
 use crate::Answer;
-
-type State = (Vec2i, u64);
 
 fn parse(input: &str) -> Vec<Vec2i> {
     input
@@ -27,43 +24,34 @@ fn solve_part_a(input: &str, h: usize, w: usize, n: usize) -> Answer {
     for byte in &bytes[0..n] {
         map[byte] = '#';
     }
-    let target = Vec2i {
-        x: w as i64 - 1,
-        y: h as i64 - 1,
-    };
-    let mut queue = MinHeap::new(&|s1: &State, s2: &State| s1.1.cmp(&s2.1));
-    let mut visited = map.same_size_with(u64::MAX);
+    let mut queue = VecDeque::new();
+    let mut costmap = map.same_size_with(u64::MAX);
 
-    queue.push((Vec2i { x: 0, y: 0 }, 0));
-    incremental_djikstra(&map, &target, &mut queue, &mut visited);
+    queue.push_back((Vec2i { x: 0, y: 0 }, 0));
+    run_bfs(&map, &mut queue, &mut costmap);
 
-    Answer::Number(visited[&target] as i64)
+    Answer::Number(costmap[(h - 1, w - 1)] as i64)
 }
 
 pub fn part_a(input: &str) -> Answer {
     solve_part_a(input, 71, 71, 1024)
 }
 
-fn incremental_djikstra(
-    map: &Map<char>,
-    target: &Vec2i,
-    queue: &mut MinHeap<(Vec2i, u64), impl Fn(&(Vec2i, u64), &(Vec2i, u64)) -> Ordering>,
-    visited: &mut Map<u64>,
-) {
-    while let Some((cur, cost)) = queue.pop() {
+fn run_bfs(map: &Map<char>, queue: &mut VecDeque<(Vec2i, u64)>, costmap: &mut Map<u64>) {
+    while let Some((cur, cost)) = queue.pop_front() {
         if !map.get(&cur).map(|x| *x != '#').unwrap_or_default() {
             continue;
         }
-        if visited[&cur] < u64::MAX {
+        if costmap[&cur] < u64::MAX {
             continue;
         }
-        visited[&cur] = cost;
-        if cur == *target {
+        costmap[&cur] = cost;
+        if cur.x == map.w as i64 - 1 && cur.y == map.h as i64 - 1 {
             break;
         }
 
         for dir in [Dir::N, Dir::E, Dir::W, Dir::S] {
-            queue.push((cur.step(dir, 1), cost + 1));
+            queue.push_back((cur.step(dir, 1), cost + 1));
         }
     }
 
@@ -71,43 +59,37 @@ fn incremental_djikstra(
 }
 
 fn solve_part_b(input: &str, h: usize, w: usize, n: usize) -> Answer {
-    // Faster options:
-    //  - [ ] use bucket queue for Djikstra
-    //  - [x] incremental djikstra
-    //    - keep track of "parents" and only run updates on nodes that are downstream of new node
-    //  - [ ] min-cut?
     let bytes = parse(input);
     let mut map = Map::<char>::new_constant(h, w, '.');
     for byte in &bytes[0..n] {
         map[byte] = '#';
     }
 
-    let mut inc_queue = MinHeap::new(&|s1: &State, s2: &State| s1.1.cmp(&s2.1));
-    let mut del_queue = MinHeap::new(&|s1: &State, s2: &State| s1.1.cmp(&s2.1));
-    let mut visited: Map<u64> = map.same_size_with(u64::MAX);
-    let target = Vec2i {
-        x: w as i64 - 1,
-        y: h as i64 - 1,
-    };
+    let mut inc_queue = VecDeque::new();
+    let mut del_queue = VecDeque::new();
+    let mut costmap: Map<u64> = map.same_size_with(u64::MAX);
 
     // compute initial costmap
-    inc_queue.push((Vec2i { x: 0, y: 0 }, 0));
-    incremental_djikstra(&map, &target, &mut inc_queue, &mut visited);
+    inc_queue.push_back((Vec2i { x: 0, y: 0 }, 0));
+    run_bfs(&map, &mut inc_queue, &mut costmap);
 
     // for each new obstacle make an incremental costmap update
     for p in &bytes[n..] {
-        if visited[p] == u64::MAX {
+        // update map
+        map[p] = '#';
+
+        if costmap[p] == u64::MAX {
             continue;
         }
 
-        // clear out cost for everything downstream of 'visited'
-        del_queue.push((*p, visited[p]));
-        while let Some((del_node, del_cost)) = del_queue.pop() {
-            let del_node_prev_cost = *visited.get(&del_node).unwrap_or(&u64::MAX);
+        // clear out cost for everything downstream of 'p'
+        del_queue.push_back((*p, costmap[p]));
+        while let Some((del_node, del_cost)) = del_queue.pop_front() {
+            let del_node_prev_cost = *costmap.get(&del_node).unwrap_or(&u64::MAX);
             if del_node_prev_cost == u64::MAX {
                 continue;
             }
-            visited[&del_node] = u64::MAX;
+            costmap[&del_node] = u64::MAX;
 
             // Only recurse if cost for this node is consistent with cost of path through 'p' (i.e.
             // del_cost), and if there is no alternative path to 'del_node' that achieves same
@@ -118,7 +100,7 @@ fn solve_part_b(input: &str, h: usize, w: usize, n: usize) -> Answer {
                 let has_other_path = del_node != *p
                     && DIRECTIONS.iter().any(|pre_dir| {
                         let pre_node = del_node.step(*pre_dir, 1);
-                        let pre_cost = *visited.get(&pre_node).unwrap_or(&u64::MAX);
+                        let pre_cost = *costmap.get(&pre_node).unwrap_or(&u64::MAX);
                         pre_cost == del_node_prev_cost - 1
                     });
                 recurse = !has_other_path;
@@ -126,20 +108,17 @@ fn solve_part_b(input: &str, h: usize, w: usize, n: usize) -> Answer {
 
             if recurse {
                 for dir in DIRECTIONS {
-                    del_queue.push((del_node.step(dir, 1), del_cost + 1));
+                    del_queue.push_back((del_node.step(dir, 1), del_cost + 1));
                 }
             } else {
-                inc_queue.push((del_node, del_node_prev_cost));
+                inc_queue.push_back((del_node, del_node_prev_cost));
             }
         }
 
-        // update map
-        map[p] = '#';
-
         // run incremental djikstra starting from lower-cost nodes
-        incremental_djikstra(&map, &target, &mut inc_queue, &mut visited);
+        run_bfs(&map, &mut inc_queue, &mut costmap);
 
-        if visited[&target] == u64::MAX {
+        if costmap[(h - 1, w - 1)] == u64::MAX {
             return Answer::String(format!("{},{}", p.x, p.y).leak::<'static>());
         }
     }
