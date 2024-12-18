@@ -17,10 +17,11 @@ pub mod day_14;
 pub mod day_15;
 pub mod day_16;
 pub mod day_17;
+pub mod day_18;
 
 pub mod day_xx;
 
-pub const ALL: [Solutions; 17] = [
+pub const ALL: [Solutions; 18] = [
     (day_01::part_a, day_01::part_b),
     (day_02::part_a, day_02::part_b),
     (day_03::part_a, day_03::part_b),
@@ -38,6 +39,7 @@ pub const ALL: [Solutions; 17] = [
     (day_15::part_a, day_15::part_b),
     (day_16::part_a, day_16::part_b),
     (day_17::part_a, day_17::part_b),
+    (day_18::part_a, day_18::part_b),
 ];
 
 #[cfg(test)]
@@ -67,7 +69,7 @@ mod tests {
         /* day 15 */ (Answer::Number(1465523), Answer::Number(1471049)),
         /* day 16 */ (Answer::Number(143580), Answer::Number(645)),
         /* day 17 */ (Answer::String("3,6,7,0,5,7,3,1,4"), Answer::Number(164278496489149)),
-        /* day 18 */ (Answer::Unimplemented, Answer::Unimplemented),
+        /* day 18 */ (Answer::Number(360), Answer::String("58,62")),
         /* day 19 */ (Answer::Unimplemented, Answer::Unimplemented),
         /* day 20 */ (Answer::Unimplemented, Answer::Unimplemented),
         /* day 21 */ (Answer::Unimplemented, Answer::Unimplemented),
