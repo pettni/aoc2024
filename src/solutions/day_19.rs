@@ -1,70 +1,52 @@
-use crate::hash::*;
 use crate::trie::Trie;
 use crate::Answer;
+use rayon::prelude::*;
 
-fn is_pattern_valid<'a>(pattern: &'a str, trie: &Trie, mem: &mut FxHashMap<&'a str, u64>) -> u64 {
-    if mem.contains_key(pattern) {
-        return mem[pattern];
-    }
-
-    let mut node = trie.root();
-    let mut this_branch = true; // if this branch is valid (no word splits)
-    let mut other_branches = 0; // if other branches are valid
-    for (i, c) in pattern.chars().enumerate() {
-        match node.step(c) {
-            Some(next) => {
-                if next.is_end() {
-                    other_branches += is_pattern_valid(&pattern[i + 1..], trie, mem);
+fn count_valid_patterns_dp(pattern: &str, trie: &Trie) -> u64 {
+    let n = pattern.len();
+    let mut dp = vec![0; n + 1];
+    dp[n] = 1;
+    for i in (0..n).rev() {
+        let mut node = trie.root();
+        for (k, c) in pattern[i..].chars().enumerate() {
+            match node.step(c) {
+                Some(next) => {
+                    if next.is_end() {
+                        dp[i] += dp[i + k + 1];
+                    }
+                    node = next;
                 }
-                node = next;
-            }
-            None => {
-                this_branch = false;
-                break;
+                None => {
+                    break;
+                }
             }
         }
     }
-
-    let result = if this_branch & node.is_end() {
-        other_branches + 1
-    } else {
-        other_branches
-    };
-    mem.insert(pattern, result);
-    result
+    dp[0]
 }
 
 fn parse(input: &str) -> (Trie, Vec<&str>) {
     let mut overall_iter = input.trim().split("\n\n");
-    let towels = overall_iter
-        .next()
-        .unwrap()
-        .split(",")
-        .map(|x| x.trim())
-        .collect::<Vec<_>>();
-    let trie = Trie::from_words(&towels);
-
+    let towels = overall_iter.next().unwrap().split(",").map(|x| x.trim());
+    let trie = Trie::from_word_iterator(towels);
     let words = overall_iter.next().unwrap().lines().collect::<Vec<_>>();
-
     (trie, words)
 }
 
 pub fn part_a(input: &str) -> Answer {
     let (trie, words) = parse(input);
-    let mut mem: FxHashMap<&str, u64> = FxHashMap::new();
     let ret = words
-        .iter()
-        .filter(|x| is_pattern_valid(x, &trie, &mut mem) > 0)
+        .par_iter()
+        .filter(|x| count_valid_patterns_dp(x, &trie) > 0)
         .count();
     Answer::Number(ret as i64)
 }
 
 pub fn part_b(input: &str) -> Answer {
     let (trie, words) = parse(input);
-    let mut mem: FxHashMap<&str, u64> = FxHashMap::new();
     let ret = words
-        .iter()
-        .map(|x| is_pattern_valid(x, &trie, &mut mem))
+        .par_iter()
+        .map(|x| count_valid_patterns_dp(x, &trie))
         .sum::<u64>();
     Answer::Number(ret as i64)
 }

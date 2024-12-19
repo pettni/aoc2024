@@ -53,6 +53,18 @@ impl Trie {
         ret
     }
 
+    /// Create a new trie from words.
+    pub fn from_word_iterator<'a, T>(words: T) -> Self
+    where
+        T: Iterator<Item = &'a str>,
+    {
+        let mut ret = Trie::new();
+        for word in words {
+            ret.insert(word);
+        }
+        ret
+    }
+
     /// Insert a new word into trie.
     pub fn insert(&mut self, word: &str) {
         let mut current = &mut self.root;
