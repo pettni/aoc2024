@@ -93,8 +93,13 @@ impl Vec2i {
     }
 
     /// Manhattan distance.
-    pub fn manhattan(&self, other: &Vec2i) -> u64 {
-        (self.x - other.x).unsigned_abs() + (self.y - other.y).unsigned_abs()
+    pub fn manhattan_norm(&self) -> u64 {
+        self.x.unsigned_abs() + self.y.unsigned_abs()
+    }
+
+    /// Manhattan distance.
+    pub fn manhattan_dist(&self, other: &Vec2i) -> u64 {
+        (*self - *other).manhattan_norm()
     }
 }
 

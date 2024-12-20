@@ -31,7 +31,7 @@ pub fn part_b(input: &str) -> Answer {
 }
 
 fn cost_to_go((pos, dir): (Vec2i, Dir), end: Vec2i) -> i64 {
-    let linear = pos.manhattan(&end) as i64;
+    let linear = pos.manhattan_dist(&end) as i64;
     let dp = end - pos;
     if dp.x == 0 && dir == Dir::N {
         return linear;
