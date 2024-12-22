@@ -1,3 +1,8 @@
+use std::{
+    iter::Sum,
+    ops::{AddAssign, Mul},
+};
+
 /// Greatest common divisor of two numbers.
 pub fn gcd(mut n: u64, mut m: u64) -> u64 {
     while m != 0 {
@@ -110,6 +115,126 @@ pub fn crt(nn: &[i64], aa: &[i64]) -> Option<i64> {
         n *= ni;
     }
     Some(x)
+}
+
+/// Enumerate all nchoosek selections.
+pub struct NChooseK {
+    n: usize,
+    indices: Vec<usize>,
+    first: bool,
+}
+
+impl NChooseK {
+    pub fn new(n: usize, k: usize) -> Self {
+        let indices = (0..k).collect();
+        assert!(k <= n);
+        NChooseK {
+            n,
+            indices,
+            first: true,
+        }
+    }
+}
+
+impl Iterator for NChooseK {
+    type Item = Vec<usize>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let k = self.indices.len();
+
+        if self.first {
+            self.first = false;
+            return Some(self.indices.clone());
+        }
+
+        if k == 0 {
+            return None;
+        }
+
+        // find highest index that can be incremented
+        let mut i = k - 1;
+        while i > 0 && self.indices[i] == self.n - k + i {
+            i -= 1;
+        }
+        if i == 0 && self.indices[0] == self.n - k {
+            return None; // we are done
+        }
+
+        // increment last index
+        self.indices[i] += 1;
+
+        // reset indices right of i
+        for j in i + 1..k {
+            self.indices[j] = self.indices[j - 1] + 1;
+        }
+
+        // can now return
+        Some(self.indices.clone())
+    }
+}
+
+pub fn nchoosek_iter(n: usize, k: usize) -> NChooseK {
+    NChooseK::new(n, k)
+}
+
+pub fn gemm<T: Mul<Output = T> + Copy + Default + AddAssign>(
+    a: &[Vec<T>],
+    b: &[Vec<T>],
+) -> Vec<Vec<T>> {
+    let arows = a.len();
+    let acols = a[0].len();
+
+    let brows = b.len();
+    let bcols = b[0].len();
+
+    assert_eq!(acols, brows);
+
+    let mut ret = vec![vec![T::default(); bcols]; arows];
+    for i in 0..arows {
+        for j in 0..bcols {
+            (0..acols).for_each(|k| {
+                ret[i][j] += a[i][k] * b[k][j];
+            });
+        }
+    }
+    ret
+}
+
+pub fn dot_vm<T: Mul<Output = T> + Copy + Default + AddAssign>(a: &[T], b: &[Vec<T>]) -> Vec<T> {
+    let alen = a.len();
+
+    let brows = b.len();
+    let bcols = b[0].len();
+
+    assert_eq!(alen, brows);
+
+    let mut ret = vec![T::default(); bcols];
+    (0..bcols).for_each(|i| {
+        (0..alen).for_each(|k| {
+            ret[i] += a[k] * b[k][i];
+        });
+    });
+    ret
+}
+
+pub fn dot_mv<T: Mul<Output = T> + Copy + Default + AddAssign>(a: &[Vec<T>], b: &[T]) -> Vec<T> {
+    let arows = a.len();
+    let acols = a[0].len();
+
+    let blen = b.len();
+
+    assert_eq!(acols, blen);
+
+    let mut ret = vec![T::default(); arows];
+    (0..arows).for_each(|i| {
+        (0..acols).for_each(|k| {
+            ret[i] += a[i][k] * b[k];
+        });
+    });
+    ret
+}
+
+pub fn dot<T: Mul<Output = T> + Copy + Default + Sum>(a: &[T], b: &[T]) -> T {
+    a.iter().zip(b.iter()).map(|(a, b)| *a * *b).sum::<T>()
 }
 
 #[cfg(test)]
@@ -285,5 +410,37 @@ mod tests {
         let ns = vec![7, 5, 12, 19, 102]; // 12 and 102 not co-prime
         let aa = vec![3, 3, 4, 18, 81];
         assert_eq!(crt(&ns, &aa), None);
+    }
+
+    #[test]
+    fn test_nchoose_k() {
+        let mut it = NChooseK::new(4, 2);
+        assert_eq!(it.next().unwrap(), vec![0, 1]);
+        assert_eq!(it.next().unwrap(), vec![0, 2]);
+        assert_eq!(it.next().unwrap(), vec![0, 3]);
+        assert_eq!(it.next().unwrap(), vec![1, 2]);
+        assert_eq!(it.next().unwrap(), vec![1, 3]);
+        assert_eq!(it.next().unwrap(), vec![2, 3]);
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_nchoose_empty() {
+        let mut it = NChooseK::new(4, 0);
+        assert_eq!(it.next().unwrap(), Vec::<usize>::new());
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_nchoose_full() {
+        let mut it = NChooseK::new(4, 4);
+        assert_eq!(it.next().unwrap(), vec![0, 1, 2, 3]);
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn test_nchoose_collect() {
+        let c = nchoosek_iter(3, 2).collect::<Vec<_>>();
+        assert_eq!(c, vec![vec![0, 1], vec![0, 2], vec![1, 2],]);
     }
 }

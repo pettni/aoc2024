@@ -1,4 +1,4 @@
-use std::ops::{Add, DivAssign, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, DivAssign, Mul, Neg, Sub};
 
 // 2D direction type
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Ord, PartialOrd)]
@@ -128,6 +128,13 @@ impl Mul<i64> for Vec2i {
     type Output = Self;
     fn mul(self, rhs: i64) -> Self::Output {
         Vec2i::new(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl AddAssign<&Vec2i> for Vec2i {
+    fn add_assign(&mut self, rhs: &Vec2i) {
+        self.x += rhs.x;
+        self.y += rhs.y;
     }
 }
 
