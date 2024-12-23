@@ -2,7 +2,8 @@ use crate::Solutions;
 
 pub mod day_01;
 pub mod day_02;
-pub mod day_03; pub mod day_04;
+pub mod day_03;
+pub mod day_04;
 pub mod day_05;
 pub mod day_06;
 pub mod day_07;
@@ -21,10 +22,11 @@ pub mod day_19;
 pub mod day_20;
 pub mod day_21;
 pub mod day_22;
+pub mod day_23;
 
 pub mod day_xx;
 
-pub const ALL: [Solutions; 22] = [
+pub const ALL: [Solutions; 23] = [
     (day_01::part_a, day_01::part_b),
     (day_02::part_a, day_02::part_b),
     (day_03::part_a, day_03::part_b),
@@ -47,6 +49,7 @@ pub const ALL: [Solutions; 22] = [
     (day_20::part_a, day_20::part_b),
     (day_21::part_a, day_21::part_b),
     (day_22::part_a, day_22::part_b),
+    (day_23::part_a, day_23::part_b),
 ];
 
 #[cfg(test)]
@@ -81,7 +84,7 @@ mod tests {
         /* day 20 */ (Answer::Number(1289), Answer::Number(982425)),
         /* day 21 */ (Answer::Number(164960), Answer::Number(205620604017764)),
         /* day 22 */ (Answer::Number(14622549304), Answer::Number(1735)),
-        /* day 23 */ (Answer::Unimplemented, Answer::Unimplemented),
+        /* day 23 */ (Answer::Number(1227), Answer::String("cl,df,ft,ir,iy,ny,qp,rb,sh,sl,sw,wm,wy")),
         /* day 24 */ (Answer::Unimplemented, Answer::Unimplemented),
         /* day 25 */ (Answer::Unimplemented, Answer::Unimplemented),
     ];
