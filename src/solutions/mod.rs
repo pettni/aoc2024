@@ -23,10 +23,11 @@ pub mod day_20;
 pub mod day_21;
 pub mod day_22;
 pub mod day_23;
+pub mod day_24;
 
 pub mod day_xx;
 
-pub const ALL: [Solutions; 23] = [
+pub const ALL: [Solutions; 24] = [
     (day_01::part_a, day_01::part_b),
     (day_02::part_a, day_02::part_b),
     (day_03::part_a, day_03::part_b),
@@ -50,6 +51,7 @@ pub const ALL: [Solutions; 23] = [
     (day_21::part_a, day_21::part_b),
     (day_22::part_a, day_22::part_b),
     (day_23::part_a, day_23::part_b),
+    (day_24::part_a, day_24::part_b),
 ];
 
 #[cfg(test)]
