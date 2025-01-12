@@ -89,8 +89,8 @@ mod tests {
         /* day 21 */ (Answer::Number(164960), Answer::Number(205620604017764)),
         /* day 22 */ (Answer::Number(14622549304), Answer::Number(1735)),
         /* day 23 */ (Answer::Number(1227), Answer::String("cl,df,ft,ir,iy,ny,qp,rb,sh,sl,sw,wm,wy")),
-        /* day 24 */ (Answer::Unimplemented, Answer::Unimplemented),
-        /* day 25 */ (Answer::Unimplemented, Answer::Unimplemented),
+        /* day 24 */ (Answer::Number(69201640933606), Answer::Unimplemented),
+        /* day 25 */ (Answer::Number(3242), Answer::Unimplemented),
     ];
 
     #[test]

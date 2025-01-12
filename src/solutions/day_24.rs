@@ -17,8 +17,7 @@ impl Op {
             _ => unreachable!(),
         }
     }
-
-    fn eval(&self, left: u32, rght: u32) -> u32 {
+    fn eval(&self, left: bool, rght: bool) -> bool {
         match self {
             Op::And => left & rght,
             Op::Or => left | rght,
@@ -30,14 +29,14 @@ impl Op {
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct Init<'a> {
     name: &'a str,
-    val: u32,
+    val: bool,
 }
 
 impl<'a> Init<'a> {
     fn from_line(line: &'a str) -> Self {
         let mut spl = line.split(": ");
         let name = spl.next().unwrap();
-        let val = spl.next().unwrap().parse::<u32>().unwrap();
+        let val = spl.next().unwrap().parse::<u32>().unwrap() > 0;
         Self { name, val }
     }
 }
@@ -53,13 +52,11 @@ struct Transition<'a> {
 impl<'a> Transition<'a> {
     fn from_line(line: &'a str) -> Self {
         let mut spl = line.split(" ");
-
         let left = spl.next().unwrap();
         let op = Op::from_str(spl.next().unwrap());
         let rght = spl.next().unwrap();
         spl.next(); // space
         let to = spl.next().unwrap();
-
         Transition { left, rght, op, to }
     }
 }
@@ -81,48 +78,61 @@ fn parse(input: &str) -> (Vec<Init>, Vec<Transition>) {
     (init, transitions)
 }
 
-pub fn part_a(input: &str) -> Answer {
-    let (init, transitions) = parse(input);
-
-    let mut known_values: FxHashMap<&str, u32> = FxHashMap::new();
+fn simulate<'a>(
+    init: &'a Vec<Init>,
+    transitions: &'a Vec<Transition>,
+) -> Option<(u64, FxHashMap<&'a str, bool>)> {
+    let mut known_values: FxHashMap<&str, bool> = FxHashMap::new();
     for Init { name, val } in init.iter() {
         known_values.insert(name, *val);
     }
 
-    let mut result: u64 = 0;
-    let mut done = false;
-    while !done {
-        done = true;
+    let mut all_done: bool;
+    let mut z: u64 = 0;
+    loop {
+        all_done = true;
+        let mut found_new = false;
         for Transition { left, op, rght, to } in transitions.iter() {
             if known_values.contains_key(to) {
                 continue;
             }
-            done = false;
+            all_done = false;
             if !known_values.contains_key(left) || !known_values.contains_key(rght) {
                 continue;
             }
+            found_new = true;
             let left_val = known_values[left];
             let rght_val = known_values[rght];
             let new_val = op.eval(left_val, rght_val);
-
-            if to.as_bytes()[0] == b'z' && new_val > 0 {
-                // add to result
+            if to.as_bytes()[0] == b'z' && new_val {
                 let idx = to[1..].parse::<u32>().unwrap();
-                result |= 1 << idx;
+                z |= 1 << idx;
             }
             known_values.insert(to, new_val);
         }
-    }
 
-    Answer::Number(result as i64)
+        if !found_new {
+            break;
+        }
+    }
+    if all_done {
+        Some((z, known_values))
+    } else {
+        None
+    }
 }
 
-fn solve_part_b(input: &str, num_swaps: u32) -> Answer {
-    Answer::String("Unimpl")
+pub fn part_a(input: &str) -> Answer {
+    let (init, transitions) = parse(input);
+    Answer::Number(simulate(&init, &transitions).unwrap().0 as i64)
+}
+
+fn solve_part_b(_input: &str, _op: &str, _n: u32) -> Answer {
+    Answer::Unimplemented
 }
 
 pub fn part_b(input: &str) -> Answer {
-    solve_part_b(input, 4)
+    solve_part_b(input, "add", 4)
 }
 
 #[cfg(test)]
@@ -229,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_part_b() {
-        let result = part_b(TEST_INPUT_B);
+        let result = solve_part_b(TEST_INPUT_B, "and", 2);
         assert_eq!(result, Answer::String("z00,z01,z02,z05"));
     }
 }
